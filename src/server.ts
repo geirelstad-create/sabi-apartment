@@ -1,0 +1,279 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { z } from 'zod';
+import { config } from './config.js';
+import { supabase } from './supabase.js';
+import { sendVerificationEmail, sendConfirmedEmail } from './mailer.js';
+import { syncAirbnb } from './airbnb.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.resolve(__dirname, '../public');
+
+const app = express();
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({ origin: config.PUBLIC_URL }));
+app.use(express.json({ limit: '1mb' }));
+
+// ---------- Hjelpere ----------
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+function nights(a: string, b: string): number {
+  return Math.round((new Date(`${b}T00:00:00Z`).getTime() - new Date(`${a}T00:00:00Z`).getTime()) / 86400000);
+}
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+function maxDateISO(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + config.MAX_MONTHS_AHEAD);
+  return d.toISOString().slice(0, 10);
+}
+function emailAllowed(email: string): boolean {
+  const dom = email.trim().toLowerCase().split('@')[1] ?? '';
+  return config.ALLOWED_DOMAINS.includes(dom);
+}
+
+// Sjekk om [checkIn, checkOut) overlapper en bekreftet/avventende booking eller blokkert dato
+async function rangeAvailable(checkIn: string, checkOut: string): Promise<boolean> {
+  // Bookinger som opptar plass: confirmed + pending (ikke utløpt)
+  const { data: bk } = await supabase
+    .from('bookings')
+    .select('check_in,check_out,status,verify_expires')
+    .in('status', ['pending', 'confirmed']);
+  for (const b of bk ?? []) {
+    if (b.status === 'pending' && b.verify_expires && new Date(b.verify_expires) < new Date()) continue; // utløpt hold
+    if (checkIn < b.check_out && b.check_in < checkOut) return false;
+  }
+  const { data: bl } = await supabase.from('blocked_dates').select('start_date,end_date');
+  for (const d of bl ?? []) {
+    if (checkIn < d.end_date && d.start_date < checkOut) return false;
+  }
+  return true;
+}
+
+function adminOk(req: express.Request): boolean {
+  const expected = config.ADMIN_PASSWORD;
+  if (!expected) return false;
+  const got = req.header('x-admin-password') || '';
+  const a = Buffer.from(got), b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  try { return timingSafeEqual(a, b); } catch { return false; }
+}
+
+// ---------- Offentlig: ledighet (ingen persondata) ----------
+app.get('/api/availability', async (_req, res) => {
+  try {
+    const out: { start: string; end: string; source: string }[] = [];
+    const { data: bk } = await supabase
+      .from('bookings')
+      .select('check_in,check_out,status,verify_expires')
+      .in('status', ['pending', 'confirmed']);
+    for (const b of bk ?? []) {
+      if (b.status === 'pending' && b.verify_expires && new Date(b.verify_expires) < new Date()) continue;
+      out.push({ start: b.check_in, end: b.check_out, source: 'booking' });
+    }
+    const { data: bl } = await supabase.from('blocked_dates').select('start_date,end_date,source');
+    for (const d of bl ?? []) out.push({ start: d.start_date, end: d.end_date, source: d.source });
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : 'Feil' });
+  }
+});
+
+// ---------- Offentlig: innhold (CMS) ----------
+app.get('/api/content', async (_req, res) => {
+  const { data } = await supabase.from('content').select('info,airbnb_ical_url').eq('id', 1).single();
+  // NB: keybox_code returneres ALDRI offentlig
+  res.json({ info: data?.info ?? null, airbnbIcalUrl: data?.airbnb_ical_url ?? '' });
+});
+
+// ---------- Opprett booking (pending + verifiserings-e-post) ----------
+app.post('/api/bookings', async (req, res) => {
+  const Body = z.object({
+    checkIn: z.string().date(),
+    checkOut: z.string().date(),
+    name: z.string().min(2),
+    email: z.string().email(),
+    guests: z.number().int().min(1).max(6).default(1),
+    message: z.string().max(1000).optional(),
+    lang: z.enum(['no', 'en']).default('no'),
+  });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
+  const b = parsed.data;
+
+  // Domenesjekk på server (frontend kan omgås)
+  if (!emailAllowed(b.email)) {
+    return res.status(403).json({ error: 'Kun e-post fra nextron.no/.se/.dk/.fi kan booke.' });
+  }
+  // Datoregler
+  const n = nights(b.checkIn, b.checkOut);
+  if (n < config.MIN_NIGHTS || n > config.MAX_NIGHTS) {
+    return res.status(400).json({ error: `Oppholdet må være mellom ${config.MIN_NIGHTS} og ${config.MAX_NIGHTS} netter.` });
+  }
+  if (b.checkIn < todayISO()) return res.status(400).json({ error: 'Innsjekk kan ikke være i fortiden.' });
+  if (b.checkIn > maxDateISO()) return res.status(400).json({ error: 'Maks 18 måneder frem i tid.' });
+
+  // Ledighet
+  if (!(await rangeAvailable(b.checkIn, b.checkOut))) {
+    return res.status(409).json({ error: 'Datoene er allerede opptatt.' });
+  }
+
+  const token = randomUUID();
+  const verifyExpires = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+
+  const { data: booking, error } = await supabase
+    .from('bookings')
+    .insert({
+      check_in: b.checkIn, check_out: b.checkOut, name: b.name, email: b.email,
+      guests: b.guests, message: b.message ?? null, lang: b.lang,
+      status: 'pending', verify_token: token, verify_expires: verifyExpires,
+    })
+    .select('*').single();
+  if (error || !booking) return res.status(500).json({ error: 'Kunne ikke opprette booking' });
+
+  try {
+    await sendVerificationEmail({ to: b.email, name: b.name, lang: b.lang, checkIn: b.checkIn, checkOut: b.checkOut, token });
+  } catch (e) {
+    console.error('Kunne ikke sende verifiserings-e-post:', e);
+  }
+  res.json({ ok: true, id: booking.id });
+});
+
+// ---------- Verifiser booking (lenke i e-post) ----------
+app.get('/api/verify', async (req, res) => {
+  const token = String(req.query.token ?? '');
+  if (!token) return res.status(400).send(htmlPage('Ugyldig lenke', 'Lenken mangler en gyldig kode.'));
+
+  const { data: booking } = await supabase
+    .from('bookings').select('*').eq('verify_token', token).single();
+
+  if (!booking) return res.status(404).send(htmlPage('Fant ikke bookingen', 'Lenken er ugyldig eller allerede brukt.'));
+  if (booking.status === 'confirmed') {
+    return res.send(htmlPage('Allerede bekreftet', 'Denne bookingen er allerede bekreftet. Sjekk e-posten din for detaljer.'));
+  }
+  if (booking.verify_expires && new Date(booking.verify_expires) < new Date()) {
+    await supabase.from('bookings').update({ status: 'expired' }).eq('id', booking.id);
+    return res.status(410).send(htmlPage('Lenken er utløpt', 'Bookingen ble ikke bekreftet i tide. Vennligst book på nytt.'));
+  }
+  // Dobbeltsjekk ledighet (i tilfelle noe ble booket i mellomtiden)
+  if (!(await rangeAvailable(booking.check_in, booking.check_out))) {
+    await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
+    return res.status(409).send(htmlPage('Datoene ble opptatt', 'Dessverre ble datoene booket av noen andre før du rakk å bekrefte.'));
+  }
+
+  await supabase.from('bookings')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString(), verify_token: null })
+    .eq('id', booking.id);
+
+  // Hent nøkkelboks-kode og send bekreftelse
+  const { data: content } = await supabase.from('content').select('keybox_code').eq('id', 1).single();
+  try {
+    await sendConfirmedEmail({
+      to: booking.email, name: booking.name, lang: booking.lang,
+      checkIn: booking.check_in, checkOut: booking.check_out,
+      keyboxCode: content?.keybox_code ?? '',
+    });
+  } catch (e) { console.error('Kunne ikke sende bekreftelse:', e); }
+
+  const en = booking.lang === 'en';
+  res.send(htmlPage(
+    en ? 'Booking confirmed!' : 'Booking bekreftet!',
+    en ? 'Thank you! Your booking is confirmed and a confirmation email with access details has been sent.'
+       : 'Takk! Bookingen din er bekreftet, og en e-post med adkomstinfo er sendt.'
+  ));
+});
+
+// ---------- Admin: bookinger ----------
+app.get('/api/admin/bookings', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { data } = await supabase.from('bookings').select('*').order('check_in', { ascending: true });
+  const list = (data ?? []).map((b: any) => ({
+    id: b.id, checkIn: b.check_in, checkOut: b.check_out, name: b.name, email: b.email,
+    guests: b.guests, message: b.message, status: b.status, source: 'booking', createdAt: b.created_at,
+  }));
+  // ta også med blokkerte (airbnb) så admin ser hele kalenderen
+  const { data: bl } = await supabase.from('blocked_dates').select('*').order('start_date', { ascending: true });
+  for (const d of bl ?? []) {
+    list.push({ id: d.id, checkIn: d.start_date, checkOut: d.end_date, name: 'Airbnb', email: '', guests: 0, message: d.summary, status: 'confirmed', source: 'airbnb', createdAt: d.created_at });
+  }
+  list.sort((a, b) => a.checkIn.localeCompare(b.checkIn));
+  res.json(list);
+});
+
+app.delete('/api/admin/bookings/:id', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { error } = await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ---------- Admin: innhold (CMS) ----------
+app.put('/api/admin/content', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const Body = z.object({
+    info: z.any().optional(),
+    keyboxCode: z.string().max(40).optional(),
+  });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
+  const patch: any = { updated_at: new Date().toISOString() };
+  if (parsed.data.info !== undefined) patch.info = parsed.data.info;
+  if (parsed.data.keyboxCode !== undefined) patch.keybox_code = parsed.data.keyboxCode;
+  const { error } = await supabase.from('content').update(patch).eq('id', 1);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+// ---------- Admin: Airbnb iCal ----------
+app.put('/api/admin/airbnb', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const url = String(req.body?.airbnbIcalUrl ?? '').trim();
+  await supabase.from('content').update({ airbnb_ical_url: url, updated_at: new Date().toISOString() }).eq('id', 1);
+  try {
+    const r = await syncAirbnb(url);
+    res.json({ ok: true, imported: r.imported });
+  } catch (e) {
+    res.status(502).json({ error: 'Kunne ikke hente iCal: ' + (e instanceof Error ? e.message : '') });
+  }
+});
+
+// Manuell trigger for synk (kan kalles av cron/Render scheduled job)
+app.post('/api/admin/sync-airbnb', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { data } = await supabase.from('content').select('airbnb_ical_url').eq('id', 1).single();
+  try {
+    const r = await syncAirbnb(data?.airbnb_ical_url ?? '');
+    res.json({ ok: true, imported: r.imported });
+  } catch (e) {
+    res.status(502).json({ error: e instanceof Error ? e.message : 'Feil' });
+  }
+});
+
+// ---------- Enkel HTML-side for verifiseringssvar ----------
+function htmlPage(title: string, body: string): string {
+  return `<!DOCTYPE html><html lang="no"><head><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
+  <style>body{font-family:Arial,sans-serif;background:#f7f6f2;color:#16213e;display:grid;place-items:center;min-height:100vh;margin:0}
+  .c{background:#fff;border:1px solid #e0ddd3;border-radius:16px;padding:38px 34px;max-width:440px;text-align:center;box-shadow:0 10px 40px rgba(27,42,94,.1)}
+  h1{color:#1b2a5e;font-size:24px;margin:0 0 12px}p{color:#41506b;line-height:1.5}a{color:#2f9fd8}
+  .b{display:inline-block;margin-top:18px;background:#1b2a5e;color:#fff;text-decoration:none;padding:11px 22px;border-radius:10px}</style>
+  </head><body><div class="c"><h1>${title}</h1><p>${body}</p>
+  <a class="b" href="${config.PUBLIC_URL}">Til bookingsiden</a></div></body></html>`;
+}
+
+// ---------- Statiske filer ----------
+app.use(express.static(publicDir));
+app.get('*', (_req, res) => res.sendFile(path.join(publicDir, 'index.html')));
+
+app.listen(config.PORT, () => {
+  console.log(`Sabi Apartment kjører på ${config.PUBLIC_URL} (port ${config.PORT})`);
+});
