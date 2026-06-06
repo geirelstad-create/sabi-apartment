@@ -607,38 +607,85 @@ function adminTab(which){
   ['bookings','cms','airbnb'].forEach(x=>$('#admin-'+x).style.display = x===which?'block':'none');
 }
 async function adminLoadBookings(){
-  const list=await api('/api/admin/bookings',{ headers:{'x-admin-password':adminPass} });
   const host=$('#admin-bookings');
-  if(!list.length){ host.innerHTML='<div class="empty-sum">Ingen bookinger.</div>'; return; }
-  host.innerHTML=list.map(b=>{
-    const stCls = b.status==='confirmed'?'st-confirmed':(b.source==='airbnb'?'st-airbnb':'st-pending');
-    const stTxt = b.source==='airbnb'?'Airbnb':(b.status==='confirmed'?'Bekreftet':'Avventer');
-    return `<div class="bk">
-      <div>
-        <div class="bk-room">${b.checkIn} → ${b.checkOut}</div>
-        <div class="bk-meta">${b.name||'-'} · ${b.email||''} ${b.guests?('· '+b.guests+' gj.'):''}</div>
-        ${b.source!=='airbnb'?`<button class="bk-del" data-del="${b.id}">Kanseller</button>`:''}
-      </div>
-      <span class="bk-status ${stCls}">${stTxt}</span>
-    </div>`;
-  }).join('');
-  host.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=async ()=>{
-    try{ await api('/api/admin/bookings/'+encodeURIComponent(btn.dataset.del),{ method:'DELETE', headers:{'x-admin-password':adminPass} }); adminLoadBookings(); loadBlocked(); }
-    catch(e){ toast('Kunne ikke kansellere.'); }
-  });
+  try{
+    const list=await api('/api/admin/bookings',{ headers:{'x-admin-password':adminPass} });
+    if(!list.length){ host.innerHTML='<div class="empty-sum">Ingen bookinger.</div>'; return; }
+    host.innerHTML=list.map(b=>{
+      const stCls = b.status==='confirmed'?'st-confirmed':(b.source==='airbnb'?'st-airbnb':'st-pending');
+      const stTxt = b.source==='airbnb'?'Airbnb':(b.status==='confirmed'?'Bekreftet':(b.status==='pending'?'Avventer':b.status));
+      return `<div class="bk">
+        <div>
+          <div class="bk-room">${b.checkIn} → ${b.checkOut}</div>
+          <div class="bk-meta">${b.name||'-'} · ${b.email||''} ${b.guests?('· '+b.guests+' gj.'):''}</div>
+          ${b.source!=='airbnb'?`<button type="button" class="bk-del" data-del="${b.id}">Kanseller</button>`:''}
+        </div>
+        <span class="bk-status ${stCls}">${stTxt}</span>
+      </div>`;
+    }).join('');
+  }catch(e){
+    host.innerHTML='<div class="empty-sum">Kunne ikke laste bookinger.</div>';
+  }
 }
+// Event delegation – tåler re-render og er mer robust enn å feste handler per knapp
+$('#admin-bookings').addEventListener('click', async (ev)=>{
+  const btn = ev.target.closest('[data-del]');
+  if(!btn) return;
+  const id = btn.dataset.del;
+  if(!confirm('Kansellere denne bookingen?')) return;
+  btn.disabled = true; btn.textContent = 'Kansellerer …';
+  try{
+    await api('/api/admin/bookings/'+encodeURIComponent(id),{ method:'DELETE', headers:{'x-admin-password':adminPass} });
+    toast('Bookingen er kansellert.');
+    await adminLoadBookings();
+    loadBlocked();
+  }catch(e){
+    toast(e.message || 'Kunne ikke kansellere.');
+    btn.disabled = false; btn.textContent = 'Kanseller';
+  }
+});
 async function adminLoadCms(){
-  try{ cms=await api('/api/content'); }catch(e){ cms=null; }
+  try{ cms=await api('/api/admin/content-full',{ headers:{'x-admin-password':adminPass} }); }
+  catch(e){ try{ cms=await api('/api/content'); }catch(e2){ cms=null; } }
   const host=$('#admin-cms');
   const airbnbUrl = (cms&&cms.airbnbIcalUrl)||'';
-  host.innerHTML=`<p style="font-size:14px;color:var(--muted);margin-bottom:10px;">Rediger infotekst som JSON (avansert) eller bruk standardtekst. Lim inn egen tekst per språk.</p>
-    <div class="field"><label>Info-innhold (JSON)</label><textarea id="cms-json" rows="10" style="font-family:monospace;font-size:12px;"></textarea></div>
-    <button class="btn" id="cms-save">Lagre tekst</button>`;
+  const keybox = (cms&&cms.keyboxCode)||'';
+  const emailNo = (cms&&cms.emailText&&cms.emailText.no)||'';
+  const emailEn = (cms&&cms.emailText&&cms.emailText.en)||'';
+  host.innerHTML=`
+    <div class="field"><label>Nøkkelboks-kode</label>
+      <input id="cms-keybox" placeholder="f.eks. 1234">
+      <div class="hint">Sendes i bekreftelses-e-posten. Vises aldri på den offentlige siden.</div>
+    </div>
+    <div class="field"><label>Ekstra tekst i bekreftelses-e-post (norsk)</label>
+      <textarea id="cms-email-no" rows="3" placeholder="Valgfri tekst som legges til i bekreftelses-e-posten på norsk."></textarea>
+    </div>
+    <div class="field"><label>Ekstra tekst i bekreftelses-e-post (engelsk)</label>
+      <textarea id="cms-email-en" rows="3" placeholder="Optional text added to the confirmation email in English."></textarea>
+    </div>
+    <button class="btn" id="cms-save-main">Lagre kode &amp; e-posttekst</button>
+    <details style="margin-top:22px;">
+      <summary style="cursor:pointer;color:var(--muted);font-size:14px;">Avansert: rediger infotekst (JSON)</summary>
+      <div class="field" style="margin-top:10px;"><label>Info-innhold (JSON)</label><textarea id="cms-json" rows="10" style="font-family:monospace;font-size:12px;"></textarea></div>
+      <button class="btn" id="cms-save-json">Lagre infotekst</button>
+    </details>`;
+  $('#cms-keybox').value = keybox;
+  $('#cms-email-no').value = emailNo;
+  $('#cms-email-en').value = emailEn;
   $('#cms-json').value = JSON.stringify((cms&&cms.info)||INFO, null, 2);
-  $('#cms-save').onclick=async ()=>{
+
+  $('#cms-save-main').onclick=async ()=>{
+    try{
+      await api('/api/admin/content',{ method:'PUT', headers:{'x-admin-password':adminPass},
+        body:JSON.stringify({ keyboxCode:$('#cms-keybox').value.trim(),
+          emailText:{ no:$('#cms-email-no').value, en:$('#cms-email-en').value } }) });
+      toast('Lagret.');
+    }catch(e){ toast(e.message||'Kunne ikke lagre.'); }
+  };
+  $('#cms-save-json').onclick=async ()=>{
     let parsed; try{ parsed=JSON.parse($('#cms-json').value); }catch(e){ toast('Ugyldig JSON.'); return; }
-    try{ await api('/api/admin/content',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({info:parsed}) }); cms=cms||{}; cms.info=parsed; renderInfo(); toast('Lagret.'); }
-    catch(e){ toast('Kunne ikke lagre.'); }
+    try{ await api('/api/admin/content',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({info:parsed}) }); cms=cms||{}; cms.info=parsed; renderInfo(); toast('Infotekst lagret.'); }
+    catch(e){ toast(e.message||'Kunne ikke lagre.'); }
   };
   // Airbnb tab
   $('#admin-airbnb').innerHTML=`<p style="font-size:14px;color:var(--muted);margin-bottom:10px;">Lim inn Airbnb iCal-lenken (.ics). Serveren henter blokkerte datoer automatisk.</p>
@@ -646,8 +693,12 @@ async function adminLoadCms(){
     <button class="btn" id="airbnb-save">Lagre &amp; synk nå</button>`;
   $('#airbnb-url').value=airbnbUrl;
   $('#airbnb-save').onclick=async ()=>{
-    try{ await api('/api/admin/airbnb',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({airbnbIcalUrl:$('#airbnb-url').value.trim()}) }); toast('Lagret. Synker …'); loadBlocked(); }
-    catch(e){ toast('Kunne ikke lagre.'); }
+    try{
+      const r = await api('/api/admin/airbnb',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({airbnbIcalUrl:$('#airbnb-url').value.trim()}) });
+      toast('Synket! Hentet '+(r&&typeof r.imported==='number'?r.imported:'?')+' blokkerte perioder.');
+      loadBlocked();
+    }
+    catch(e){ toast(e.message || 'Kunne ikke synke.'); }
   };
 }
 

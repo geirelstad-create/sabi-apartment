@@ -5,6 +5,10 @@ function smtpReady() {
   return Boolean(config.SMTP_HOST && config.SMTP_USER && config.SMTP_PASS && config.MAIL_FROM);
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 const transporter = smtpReady()
   ? nodemailer.createTransport({
       host: config.SMTP_HOST,
@@ -65,7 +69,7 @@ export async function sendVerificationEmail(opts: {
 }
 
 export async function sendConfirmedEmail(opts: {
-  to: string; name: string; lang: string; checkIn: string; checkOut: string; keyboxCode: string;
+  to: string; name: string; lang: string; checkIn: string; checkOut: string; keyboxCode: string; extraText?: string;
 }) {
   if (!transporter || !config.MAIL_FROM) return;
   const en = opts.lang === 'en';
@@ -77,16 +81,21 @@ export async function sendConfirmedEmail(opts: {
         : `<p>Koden til nøkkelboksen (merket «Quad AS», ved kirken i Sabinillas) er:</p>
            <p style="font-size:26px;font-weight:700;letter-spacing:3px;color:#1b2a5e;text-align:center;margin:14px 0">${opts.keyboxCode}</p>`)
     : '';
+  const extraBlock = opts.extraText && opts.extraText.trim()
+    ? `<div style="margin:14px 0;white-space:pre-line">${escapeHtml(opts.extraText.trim())}</div>`
+    : '';
   const html = shell(en ? `
     <p>Hi ${opts.name},</p>
     <p>Your booking is now <b>confirmed</b>: <b>${opts.checkIn}</b> to <b>${opts.checkOut}</b>.</p>
     ${codeBlock}
+    ${extraBlock}
     <p>Have a great stay!</p>
     <p style="color:#6b7280;font-size:13px">For urgent local matters: Wilkins Property Management, +34 951 277 170.</p>
   ` : `
     <p>Hei ${opts.name},</p>
     <p>Bookingen din er nå <b>bekreftet</b>: <b>${opts.checkIn}</b> til <b>${opts.checkOut}</b>.</p>
     ${codeBlock}
+    ${extraBlock}
     <p>God tur!</p>
     <p style="color:#6b7280;font-size:13px">Ved akutte lokale behov: Wilkins Property Management, +34 951 277 170.</p>
   `);

@@ -175,12 +175,14 @@ app.get('/api/verify', async (req, res) => {
     .eq('id', booking.id);
 
   // Hent nøkkelboks-kode og send bekreftelse
-  const { data: content } = await supabase.from('content').select('keybox_code').eq('id', 1).single();
+  const { data: content } = await supabase.from('content').select('keybox_code,email_text').eq('id', 1).single();
+  const extra = (content?.email_text && (content.email_text as any)[booking.lang]) || '';
   try {
     await sendConfirmedEmail({
       to: booking.email, name: booking.name, lang: booking.lang,
       checkIn: booking.check_in, checkOut: booking.check_out,
       keyboxCode: content?.keybox_code ?? '',
+      extraText: extra,
     });
   } catch (e) { console.error('Kunne ikke sende bekreftelse:', e); }
 
@@ -216,18 +218,32 @@ app.delete('/api/admin/bookings/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ---------- Admin: full innhold (inkl. kode + e-posttekst) ----------
+app.get('/api/admin/content-full', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { data } = await supabase.from('content').select('*').eq('id', 1).single();
+  res.json({
+    info: data?.info ?? null,
+    airbnbIcalUrl: data?.airbnb_ical_url ?? '',
+    keyboxCode: data?.keybox_code ?? '',
+    emailText: data?.email_text ?? { no: '', en: '' },
+  });
+});
+
 // ---------- Admin: innhold (CMS) ----------
 app.put('/api/admin/content', async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
   const Body = z.object({
     info: z.any().optional(),
     keyboxCode: z.string().max(40).optional(),
+    emailText: z.object({ no: z.string().max(2000).optional(), en: z.string().max(2000).optional() }).optional(),
   });
   const parsed = Body.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
   const patch: any = { updated_at: new Date().toISOString() };
   if (parsed.data.info !== undefined) patch.info = parsed.data.info;
   if (parsed.data.keyboxCode !== undefined) patch.keybox_code = parsed.data.keyboxCode;
+  if (parsed.data.emailText !== undefined) patch.email_text = parsed.data.emailText;
   const { error } = await supabase.from('content').update(patch).eq('id', 1);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });

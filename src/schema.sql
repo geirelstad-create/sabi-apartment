@@ -43,6 +43,7 @@ create table if not exists content (
   info jsonb,                      -- { no:[...], en:[...] }
   airbnb_ical_url text,
   keybox_code text default '',     -- sendes i bekreftelses-e-post, vises ikke offentlig
+  email_text jsonb,                -- { no:"...", en:"..." } ekstra tekst i bekreftelses-e-post
   updated_at timestamptz not null default now(),
   constraint content_singleton check (id = 1)
 );
