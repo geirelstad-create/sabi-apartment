@@ -394,6 +394,102 @@ app.delete('/api/admin/bookings/:id', async (req, res) => {
   res.json({ ok: true });
 });
 
+// ---------- Admin: opprett booking manuelt ----------
+app.post('/api/admin/bookings', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const Body = z.object({
+    checkIn: z.string().date(),
+    checkOut: z.string().date(),
+    name: z.string().min(2),
+    email: z.string().email(),
+    guests: z.number().int().min(1).max(6).default(2),
+    message: z.string().max(1000).optional(),
+    lang: z.enum(['no', 'en']).default('no'),
+    confirmNow: z.boolean().default(true),   // bekreft direkte, eller send verifiseringslenke
+    sendMail: z.boolean().default(false),    // send bekreftelsesmail med kode (kun ved confirmNow)
+  });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
+  const b = parsed.data;
+
+  // Admin kan booke for hvilken som helst e-post – ingen domenesjekk her.
+  const n = nights(b.checkIn, b.checkOut);
+  if (n < 1) return res.status(400).json({ error: 'Utsjekk må være etter innsjekk.' });
+  if (!(await rangeAvailable(b.checkIn, b.checkOut))) {
+    return res.status(409).json({ error: 'Datoene overlapper en eksisterende booking eller blokkering.' });
+  }
+
+  if (b.confirmNow) {
+    const { data: booking, error } = await supabase.from('bookings').insert({
+      check_in: b.checkIn, check_out: b.checkOut, name: b.name, email: b.email,
+      guests: b.guests, message: b.message ?? 'Lagt inn av admin', lang: b.lang,
+      status: 'confirmed', confirmed_at: new Date().toISOString(),
+    }).select('id').single();
+    if (error || !booking) return res.status(500).json({ error: 'Kunne ikke opprette booking' });
+
+    if (b.sendMail) {
+      const { data: content } = await supabase.from('content').select('keybox_code,email_text').eq('id', 1).maybeSingle();
+      const extra = (content?.email_text && (content.email_text as any)[b.lang]) || '';
+      try {
+        await sendConfirmedEmail({ to: b.email, name: b.name, lang: b.lang, checkIn: b.checkIn, checkOut: b.checkOut, keyboxCode: content?.keybox_code ?? '', extraText: extra });
+      } catch (e) { console.error('Bekreftelsesmail feilet:', e); }
+    }
+    return res.json({ ok: true, id: booking.id, status: 'confirmed' });
+  } else {
+    // Send verifiseringslenke som en vanlig booking
+    const token = randomUUID();
+    const verifyExpires = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+    const { data: booking, error } = await supabase.from('bookings').insert({
+      check_in: b.checkIn, check_out: b.checkOut, name: b.name, email: b.email,
+      guests: b.guests, message: b.message ?? 'Lagt inn av admin', lang: b.lang,
+      status: 'pending', verify_token: token, verify_expires: verifyExpires,
+    }).select('id').single();
+    if (error || !booking) return res.status(500).json({ error: 'Kunne ikke opprette booking' });
+    try {
+      await sendVerificationEmail({ to: b.email, name: b.name, lang: b.lang, checkIn: b.checkIn, checkOut: b.checkOut, token });
+    } catch (e) { console.error('Verifiseringsmail feilet:', e); }
+    return res.json({ ok: true, id: booking.id, status: 'pending' });
+  }
+});
+
+// ---------- Admin: rediger booking ----------
+app.put('/api/admin/bookings/:id', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const Body = z.object({
+    checkIn: z.string().date().optional(),
+    checkOut: z.string().date().optional(),
+    name: z.string().min(2).optional(),
+    email: z.string().email().optional(),
+    guests: z.number().int().min(1).max(6).optional(),
+    message: z.string().max(1000).optional(),
+  });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
+  const p = parsed.data;
+
+  const { data: existing } = await supabase.from('bookings').select('*').eq('id', req.params.id).maybeSingle();
+  if (!existing) return res.status(404).json({ error: 'Fant ikke bookingen' });
+
+  const newIn = p.checkIn ?? existing.check_in;
+  const newOut = p.checkOut ?? existing.check_out;
+  if (nights(newIn, newOut) < 1) return res.status(400).json({ error: 'Utsjekk må være etter innsjekk.' });
+  // sjekk ledighet, men ignorer bookingen selv
+  if (!(await rangeAvailable(newIn, newOut, existing.id))) {
+    return res.status(409).json({ error: 'Nye datoer overlapper en annen booking/blokkering.' });
+  }
+
+  const patch: any = {};
+  if (p.checkIn !== undefined) patch.check_in = p.checkIn;
+  if (p.checkOut !== undefined) patch.check_out = p.checkOut;
+  if (p.name !== undefined) patch.name = p.name;
+  if (p.email !== undefined) patch.email = p.email;
+  if (p.guests !== undefined) patch.guests = p.guests;
+  if (p.message !== undefined) patch.message = p.message;
+  const { error } = await supabase.from('bookings').update(patch).eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
 // ---------- Admin: full innhold (inkl. kode + e-posttekst) ----------
 app.get('/api/admin/content-full', async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
