@@ -19,6 +19,12 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: config.PUBLIC_URL }));
 app.use(express.json({ limit: '1mb' }));
 
+// Hold siden ute av søkemotorer (bedriftsintern – skal ikke indekseres)
+app.use((_req, res, next) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  next();
+});
+
 // ---------- Hjelpere ----------
 function addDays(dateStr: string, days: number): string {
   const d = new Date(`${dateStr}T00:00:00Z`);
