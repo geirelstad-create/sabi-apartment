@@ -409,17 +409,24 @@ app.get('/api/admin/airbnb-debug', async (req, res) => {
   const out: any = {};
 
   // 1) Kan vi lese content-raden?
-  const { data: row, error: readErr } = await supabase.from('content').select('id,airbnb_ical_url').eq('id', 1).maybeSingle();
+  const { data: row, error: readErr } = await supabase.from('content').select('*').eq('id', 1).maybeSingle();
   out.dbReadError = readErr ? readErr.message : null;
   out.contentRowExists = !!row;
+  out.columnsPresent = row ? Object.keys(row) : [];
   const url = row?.airbnb_ical_url ?? '';
   out.urlSet = !!url;
   out.urlLength = url.length;
   out.urlTail = url ? url.slice(-24) : '';
 
-  // 2) Test en skrive-operasjon (upsert en uskyldig oppdatering) for å fange RLS/tillatelsesfeil
-  const { error: writeErr } = await supabase.from('content').upsert({ id: 1, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+  // 2) Test å skrive URL-en direkte og les tilbake umiddelbart
+  const testUrl = 'https://TEST-WRITE.example/ical.ics';
+  const { error: writeErr } = await supabase.from('content').upsert({ id: 1, airbnb_ical_url: testUrl }, { onConflict: 'id' });
   out.dbWriteError = writeErr ? writeErr.message : null;
+  const { data: after } = await supabase.from('content').select('airbnb_ical_url').eq('id', 1).maybeSingle();
+  out.urlAfterTestWrite = after?.airbnb_ical_url ?? '(tom)';
+  out.testWritePersisted = (after?.airbnb_ical_url === testUrl);
+  // rydd opp igjen (sett tilbake til det som var)
+  await supabase.from('content').upsert({ id: 1, airbnb_ical_url: url }, { onConflict: 'id' });
 
   // 3) Hvis vi har en URL, prøv å hente den
   if (url) {
