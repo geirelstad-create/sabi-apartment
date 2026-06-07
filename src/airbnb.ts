@@ -13,8 +13,10 @@ function toISODate(d: Date): string {
  * Airbnb blokkerer forespørsler uten en nettleserlignende User-Agent, så vi henter
  * teksten selv med fetch og sender den til ical.parseICS (mer robust enn fromURL).
  */
-export async function syncAirbnb(icalUrl: string): Promise<{ imported: number }> {
-  if (!icalUrl) return { imported: 0 };
+type Collision = { airbnbStart: string; airbnbEnd: string; bookingName: string; bookingEmail: string; bookingStart: string; bookingEnd: string };
+
+export async function syncAirbnb(icalUrl: string): Promise<{ imported: number; collisions: Collision[] }> {
+  if (!icalUrl) return { imported: 0, collisions: [] };
 
   const resp = await fetch(icalUrl, {
     headers: {
@@ -36,15 +38,28 @@ export async function syncAirbnb(icalUrl: string): Promise<{ imported: number }>
 
   const data = ical.parseICS(text);
   const rows: { start_date: string; end_date: string; source: string; uid: string; summary: string }[] = [];
+  // realGuestRanges: kun ekte Airbnb-gjester (ikke manuelle "Not available"-blokkeringer)
+  const realGuestRanges: { start: string; end: string }[] = [];
   for (const k of Object.keys(data)) {
     const ev: any = data[k];
     if (ev.type !== 'VEVENT') continue;
     if (!ev.start || !ev.end) continue;
+    const start = toISODate(new Date(ev.start));
+    const end = toISODate(new Date(ev.end));
+    const summary = String(ev.summary ?? '');
+    const desc = String(ev.description ?? '');
+    // Ekte gjest: Airbnb skriver "Reserved" og legger ved reservasjonsdetaljer (DESCRIPTION).
+    // Manuell blokkering: "Not available" / "Blocked", uten reservasjonsdetaljer.
+    const isManualBlock = /not available|blocked/i.test(summary) ||
+      (!/reserved/i.test(summary) && !/reservation/i.test(desc));
+    if (!isManualBlock) {
+      realGuestRanges.push({ start, end });
+    }
     rows.push({
-      start_date: toISODate(new Date(ev.start)),
-      end_date: toISODate(new Date(ev.end)),
+      start_date: start,
+      end_date: end,
       source: 'airbnb',
-      uid: String(ev.uid ?? `${toISODate(new Date(ev.start))}_${toISODate(new Date(ev.end))}`),
+      uid: String(ev.uid ?? `${start}_${end}`),
       summary: 'Airbnb',
     });
   }
@@ -54,6 +69,26 @@ export async function syncAirbnb(icalUrl: string): Promise<{ imported: number }>
     throw new Error(`Fant ${veventCount} perioder i kalenderen, men klarte ikke å lese datoene. Kontakt support.`);
   }
 
+  // Finn kollisjoner: KUN ekte Airbnb-gjester som overlapper bekreftede interne bookinger.
+  // Manuelle "Not available"-blokkeringer ignoreres (de stammer ofte fra våre egne interne bookinger).
+  const collisions: Collision[] = [];
+  const { data: confirmed } = await supabase
+    .from('bookings')
+    .select('check_in,check_out,name,email')
+    .eq('status', 'confirmed');
+  for (const ab of realGuestRanges) {
+    for (const bk of confirmed ?? []) {
+      // halvåpne intervaller [start,end) overlapper hvis start1 < end2 og start2 < end1
+      if (ab.start < bk.check_out && bk.check_in < ab.end) {
+        collisions.push({
+          airbnbStart: ab.start, airbnbEnd: ab.end,
+          bookingName: bk.name, bookingEmail: bk.email,
+          bookingStart: bk.check_in, bookingEnd: bk.check_out,
+        });
+      }
+    }
+  }
+
   // Erstatt alle eksisterende airbnb-rader med de ferske (enkelt og robust)
   const { error: delErr } = await supabase.from('blocked_dates').delete().eq('source', 'airbnb');
   if (delErr) throw new Error('Databasefeil ved sletting av gamle Airbnb-datoer: ' + delErr.message);
@@ -61,6 +96,6 @@ export async function syncAirbnb(icalUrl: string): Promise<{ imported: number }>
     const { error } = await supabase.from('blocked_dates').insert(rows);
     if (error) throw new Error('Databasefeil ved lagring: ' + error.message);
   }
-  return { imported: rows.length };
+  return { imported: rows.length, collisions };
 }
 

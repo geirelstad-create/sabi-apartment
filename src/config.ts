@@ -33,6 +33,9 @@ export const config = {
   ACCESS_SECRET: process.env.ACCESS_SECRET ?? process.env.ADMIN_PASSWORD ?? 'endre-meg',
   ACCESS_TICKET_DAYS: 30,
 
+  // Anthropic API-nøkkel for maskinoversettelse (valgfri – knappen virker kun hvis satt)
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+
   // Booking-regler
   MIN_NIGHTS: 4,
   MAX_NIGHTS: 14,

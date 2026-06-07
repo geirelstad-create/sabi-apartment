@@ -91,6 +91,28 @@ export async function sendAccessEmail(opts: { to: string; lang: string; token: s
   await transporter.sendMail({ from: config.MAIL_FROM, to: opts.to, subject, html });
 }
 
+export async function sendCollisionAlert(collisions: Array<{ airbnbStart: string; airbnbEnd: string; bookingName: string; bookingEmail: string; bookingStart: string; bookingEnd: string }>) {
+  if (!transporter || !config.MAIL_FROM || !config.MAIL_ADMIN) return;
+  if (!collisions.length) return;
+  const rows = collisions.map(c => `
+    <tr>
+      <td style="padding:8px;border:1px solid #e0ddd3">${c.airbnbStart} → ${c.airbnbEnd}</td>
+      <td style="padding:8px;border:1px solid #e0ddd3">${escapeHtml(c.bookingName)} (${escapeHtml(c.bookingEmail)})<br>${c.bookingStart} → ${c.bookingEnd}</td>
+    </tr>`).join('');
+  const html = shell(`
+    <p><b>Obs – overlappende datoer oppdaget.</b></p>
+    <p>Airbnb-synken fant ${collisions.length} Airbnb-periode(r) som overlapper en bekreftet intern booking. Dette kan bety dobbeltbooking – sjekk og rydd opp manuelt.</p>
+    <table style="border-collapse:collapse;font-size:14px;margin-top:10px">
+      <tr><th style="padding:8px;border:1px solid #e0ddd3;text-align:left">Airbnb</th><th style="padding:8px;border:1px solid #e0ddd3;text-align:left">Intern booking</th></tr>
+      ${rows}
+    </table>`);
+  await transporter.sendMail({
+    from: config.MAIL_FROM, to: config.MAIL_ADMIN,
+    subject: `⚠️ Mulig dobbeltbooking: ${collisions.length} overlapp oppdaget`,
+    html,
+  });
+}
+
 export async function sendConfirmedEmail(opts: {
   to: string; name: string; lang: string; checkIn: string; checkOut: string; keyboxCode: string; extraText?: string;
 }) {

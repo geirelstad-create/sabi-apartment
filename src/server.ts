@@ -7,7 +7,7 @@ import { randomUUID, timingSafeEqual, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { config } from './config.js';
 import { supabase } from './supabase.js';
-import { sendVerificationEmail, sendConfirmedEmail, sendAccessEmail } from './mailer.js';
+import { sendVerificationEmail, sendConfirmedEmail, sendAccessEmail, sendCollisionAlert } from './mailer.js';
 import { syncAirbnb } from './airbnb.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -190,6 +190,55 @@ app.put('/api/admin/allowed-emails', async (req, res) => {
   const { error } = await supabase.from('content').upsert({ id: 1, allowed_emails: clean, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true, emails: clean });
+});
+
+// ---------- Admin: maskinoversettelse (no -> en) ----------
+app.post('/api/admin/translate', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  if (!config.ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'Oversettelse er ikke konfigurert (mangler ANTHROPIC_API_KEY).' });
+  }
+  const source = req.body?.no;
+  if (source === undefined) return res.status(400).json({ error: 'Mangler norsk tekst å oversette.' });
+
+  try {
+    const prompt = `Du er en profesjonell oversetter. Oversett verdiene i denne JSON-strukturen fra norsk til engelsk. ` +
+      `Behold ALLE nøkler, struktur, HTML-tagger, lenker (href), telefonnumre, e-postadresser, koder og emojier nøyaktig som de er – oversett KUN den menneskelige teksten. ` +
+      `Svar med KUN gyldig JSON, ingen forklaring, ingen markdown-kodeblokk.\n\nJSON:\n${JSON.stringify(source)}`;
+
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': config.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      return res.status(502).json({ error: `Oversettelsestjenesten svarte ${r.status}: ${t.slice(0, 200)}` });
+    }
+    const data: any = await r.json();
+    let textOut = (data.content || []).filter((b: any) => b.type === 'text').map((b: any) => b.text).join('');
+    textOut = textOut.replace(/```json\s*|\s*```/g, '').trim();
+    let parsed;
+    try { parsed = JSON.parse(textOut); }
+    catch { return res.status(502).json({ error: 'Klarte ikke å tolke oversettelsen. Prøv igjen.' }); }
+    res.json({ en: parsed });
+  } catch (e) {
+    res.status(502).json({ error: 'Oversettelse feilet: ' + (e instanceof Error ? e.message : '') });
+  }
+});
+
+// ---------- Admin: maskinoversettelse-status ----------
+app.get('/api/admin/translate-available', (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  res.json({ available: !!config.ANTHROPIC_API_KEY });
 });
 
 // ---------- Offentlig: ledighet (begrenset persondata: kun initialer + land) ----------
@@ -384,7 +433,8 @@ app.put('/api/admin/airbnb', async (req, res) => {
   if (upErr) return res.status(500).json({ error: 'Kunne ikke lagre URL: ' + upErr.message });
   try {
     const r = await syncAirbnb(url);
-    res.json({ ok: true, imported: r.imported });
+    if (r.collisions.length) { try { await sendCollisionAlert(r.collisions); } catch (e) { console.error('Kunne ikke sende kollisjonsvarsel:', e); } }
+    res.json({ ok: true, imported: r.imported, collisions: r.collisions.length });
   } catch (e) {
     res.status(502).json({ error: 'Kunne ikke hente iCal: ' + (e instanceof Error ? e.message : '') });
   }
@@ -396,7 +446,8 @@ app.post('/api/admin/sync-airbnb', async (req, res) => {
   const { data } = await supabase.from('content').select('airbnb_ical_url').eq('id', 1).single();
   try {
     const r = await syncAirbnb(data?.airbnb_ical_url ?? '');
-    res.json({ ok: true, imported: r.imported });
+    if (r.collisions.length) { try { await sendCollisionAlert(r.collisions); } catch (e) { console.error('Kunne ikke sende kollisjonsvarsel:', e); } }
+    res.json({ ok: true, imported: r.imported, collisions: r.collisions.length });
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : 'Feil' });
   }
