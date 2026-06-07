@@ -187,7 +187,7 @@ app.put('/api/admin/allowed-emails', async (req, res) => {
   const parsed = Body.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Ugyldig liste' });
   const clean = Array.from(new Set(parsed.data.emails.map(e => e.trim().toLowerCase())));
-  const { error } = await supabase.from('content').update({ allowed_emails: clean, updated_at: new Date().toISOString() }).eq('id', 1);
+  const { error } = await supabase.from('content').upsert({ id: 1, allowed_emails: clean, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true, emails: clean });
 });
@@ -367,11 +367,11 @@ app.put('/api/admin/content', async (req, res) => {
   });
   const parsed = Body.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
-  const patch: any = { updated_at: new Date().toISOString() };
+  const patch: any = { id: 1, updated_at: new Date().toISOString() };
   if (parsed.data.info !== undefined) patch.info = parsed.data.info;
   if (parsed.data.keyboxCode !== undefined) patch.keybox_code = parsed.data.keyboxCode;
   if (parsed.data.emailText !== undefined) patch.email_text = parsed.data.emailText;
-  const { error } = await supabase.from('content').update(patch).eq('id', 1);
+  const { error } = await supabase.from('content').upsert(patch, { onConflict: 'id' });
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
 });
@@ -380,7 +380,8 @@ app.put('/api/admin/content', async (req, res) => {
 app.put('/api/admin/airbnb', async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
   const url = String(req.body?.airbnbIcalUrl ?? '').trim();
-  await supabase.from('content').update({ airbnb_ical_url: url, updated_at: new Date().toISOString() }).eq('id', 1);
+  const { error: upErr } = await supabase.from('content').upsert({ id: 1, airbnb_ical_url: url, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+  if (upErr) return res.status(500).json({ error: 'Kunne ikke lagre URL: ' + upErr.message });
   try {
     const r = await syncAirbnb(url);
     res.json({ ok: true, imported: r.imported });
