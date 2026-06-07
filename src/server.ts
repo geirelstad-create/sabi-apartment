@@ -425,8 +425,10 @@ app.get('/api/admin/airbnb-debug', async (req, res) => {
   const { data: after } = await supabase.from('content').select('airbnb_ical_url').eq('id', 1).maybeSingle();
   out.urlAfterTestWrite = after?.airbnb_ical_url ?? '(tom)';
   out.testWritePersisted = (after?.airbnb_ical_url === testUrl);
-  // rydd opp igjen (sett tilbake til det som var)
-  await supabase.from('content').upsert({ id: 1, airbnb_ical_url: url }, { onConflict: 'id' });
+  // sett tilbake KUN hvis det fantes en ekte url fra før (ikke overskriv en nylig lagret url med tom)
+  if (url) {
+    await supabase.from('content').upsert({ id: 1, airbnb_ical_url: url }, { onConflict: 'id' });
+  }
 
   // 3) Hvis vi har en URL, prøv å hente den
   if (url) {
