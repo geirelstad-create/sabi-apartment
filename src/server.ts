@@ -405,27 +405,42 @@ app.post('/api/admin/sync-airbnb', async (req, res) => {
 // Diagnose: viser nøyaktig hva Render mottar fra Airbnb (kun admin)
 app.get('/api/admin/airbnb-debug', async (req, res) => {
   if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
-  const { data } = await supabase.from('content').select('airbnb_ical_url').eq('id', 1).single();
-  const url = data?.airbnb_ical_url ?? '';
-  if (!url) return res.json({ urlSet: false });
-  const out: any = { urlSet: true, urlLength: url.length, urlTail: url.slice(-24) };
-  try {
-    const resp = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SabiApartmentBooking/1.0; +https://www.sabi-apartment.no)',
-        'Accept': 'text/calendar, text/plain, */*',
-      },
-      redirect: 'follow',
-    });
-    const text = await resp.text();
-    out.httpStatus = resp.status;
-    out.contentType = resp.headers.get('content-type');
-    out.bodyLength = text.length;
-    out.hasVCALENDAR = text.includes('BEGIN:VCALENDAR');
-    out.veventCount = (text.match(/BEGIN:VEVENT/g) || []).length;
-    out.bodyStart = text.slice(0, 300);
-  } catch (e) {
-    out.fetchError = e instanceof Error ? e.message : String(e);
+
+  const out: any = {};
+
+  // 1) Kan vi lese content-raden?
+  const { data: row, error: readErr } = await supabase.from('content').select('id,airbnb_ical_url').eq('id', 1).maybeSingle();
+  out.dbReadError = readErr ? readErr.message : null;
+  out.contentRowExists = !!row;
+  const url = row?.airbnb_ical_url ?? '';
+  out.urlSet = !!url;
+  out.urlLength = url.length;
+  out.urlTail = url ? url.slice(-24) : '';
+
+  // 2) Test en skrive-operasjon (upsert en uskyldig oppdatering) for å fange RLS/tillatelsesfeil
+  const { error: writeErr } = await supabase.from('content').upsert({ id: 1, updated_at: new Date().toISOString() }, { onConflict: 'id' });
+  out.dbWriteError = writeErr ? writeErr.message : null;
+
+  // 3) Hvis vi har en URL, prøv å hente den
+  if (url) {
+    try {
+      const resp = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; SabiApartmentBooking/1.0; +https://www.sabi-apartment.no)',
+          'Accept': 'text/calendar, text/plain, */*',
+        },
+        redirect: 'follow',
+      });
+      const text = await resp.text();
+      out.httpStatus = resp.status;
+      out.contentType = resp.headers.get('content-type');
+      out.bodyLength = text.length;
+      out.hasVCALENDAR = text.includes('BEGIN:VCALENDAR');
+      out.veventCount = (text.match(/BEGIN:VEVENT/g) || []).length;
+      out.bodyStart = text.slice(0, 200);
+    } catch (e) {
+      out.fetchError = e instanceof Error ? e.message : String(e);
+    }
   }
   res.json(out);
 });
