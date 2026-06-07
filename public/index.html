@@ -767,7 +767,9 @@ async function adminLoadCms(){
   // Airbnb tab
   $('#admin-airbnb').innerHTML=`<p style="font-size:14px;color:var(--muted);margin-bottom:10px;">Lim inn Airbnb iCal-lenken (.ics). Serveren henter blokkerte datoer automatisk.</p>
     <div class="field"><label>Airbnb iCal URL</label><input id="airbnb-url" placeholder="https://www.airbnb.com/calendar/ical/...ics"></div>
-    <button class="btn" id="airbnb-save">Lagre &amp; synk nå</button>`;
+    <button class="btn" id="airbnb-save">Lagre &amp; synk nå</button>
+    <button class="btn" id="airbnb-debug" style="background:var(--cyan-deep);margin-top:10px;">Diagnostiser henting</button>
+    <pre id="airbnb-debug-out" style="display:none;white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12px;margin-top:12px;"></pre>`;
   $('#airbnb-url').value=airbnbUrl;
   $('#airbnb-save').onclick=async ()=>{
     try{
@@ -776,6 +778,13 @@ async function adminLoadCms(){
       loadBlocked();
     }
     catch(e){ toast(e.message || 'Kunne ikke synke.'); }
+  };
+  $('#airbnb-debug').onclick=async ()=>{
+    const out=$('#airbnb-debug-out'); out.style.display='block'; out.textContent='Henter …';
+    try{
+      const r = await api('/api/admin/airbnb-debug',{ headers:{'x-admin-password':adminPass} });
+      out.textContent = JSON.stringify(r, null, 2);
+    }catch(e){ out.textContent = 'Feil: '+(e.message||e); }
   };
 }
 
