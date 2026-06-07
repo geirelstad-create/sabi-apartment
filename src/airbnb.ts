@@ -27,8 +27,14 @@ export async function syncAirbnb(icalUrl: string): Promise<{ imported: number }>
     throw new Error(`Airbnb svarte ${resp.status} ${resp.statusText}. iCal-lenken kan være feil, eller Airbnb blokkerer serveren.`);
   }
   const text = await resp.text();
-  const data = ical.parseICS(text);
 
+  // Sjekk at vi faktisk fikk en iCal-fil og ikke en HTML-side / feilmelding
+  if (!text.includes('BEGIN:VCALENDAR')) {
+    throw new Error('Svaret fra Airbnb var ikke en gyldig kalender. Sjekk at iCal-lenken er riktig og fortsatt aktiv.');
+  }
+  const veventCount = (text.match(/BEGIN:VEVENT/g) || []).length;
+
+  const data = ical.parseICS(text);
   const rows: { start_date: string; end_date: string; source: string; uid: string; summary: string }[] = [];
   for (const k of Object.keys(data)) {
     const ev: any = data[k];
@@ -43,11 +49,17 @@ export async function syncAirbnb(icalUrl: string): Promise<{ imported: number }>
     });
   }
 
+  // Hvis filen hadde VEVENT-er men vi fikk 0 rader, er det en parse-feil verdt å vite om
+  if (veventCount > 0 && rows.length === 0) {
+    throw new Error(`Fant ${veventCount} perioder i kalenderen, men klarte ikke å lese datoene. Kontakt support.`);
+  }
+
   // Erstatt alle eksisterende airbnb-rader med de ferske (enkelt og robust)
-  await supabase.from('blocked_dates').delete().eq('source', 'airbnb');
+  const { error: delErr } = await supabase.from('blocked_dates').delete().eq('source', 'airbnb');
+  if (delErr) throw new Error('Databasefeil ved sletting av gamle Airbnb-datoer: ' + delErr.message);
   if (rows.length) {
     const { error } = await supabase.from('blocked_dates').insert(rows);
-    if (error) throw error;
+    if (error) throw new Error('Databasefeil ved lagring: ' + error.message);
   }
   return { imported: rows.length };
 }

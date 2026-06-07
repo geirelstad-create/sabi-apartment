@@ -3,11 +3,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { randomUUID, timingSafeEqual } from 'node:crypto';
+import { randomUUID, timingSafeEqual, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { config } from './config.js';
 import { supabase } from './supabase.js';
-import { sendVerificationEmail, sendConfirmedEmail } from './mailer.js';
+import { sendVerificationEmail, sendConfirmedEmail, sendAccessEmail } from './mailer.js';
 import { syncAirbnb } from './airbnb.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -41,19 +41,67 @@ function emailAllowed(email: string): boolean {
   return config.ALLOWED_DOMAINS.includes(dom);
 }
 
+// Henter ekstra godkjente e-poster (utenfor Nextron) fra content
+async function getAllowedExtraEmails(): Promise<string[]> {
+  const { data } = await supabase.from('content').select('allowed_emails').eq('id', 1).single();
+  const arr = (data?.allowed_emails as any) ?? [];
+  return Array.isArray(arr) ? arr.map((e: string) => String(e).trim().toLowerCase()) : [];
+}
+
+// Får denne e-posten lov (Nextron-domene ELLER ekstra godkjent adresse)?
+async function emailMayAccess(email: string): Promise<boolean> {
+  const e = email.trim().toLowerCase();
+  if (emailAllowed(e)) return true;
+  const extra = await getAllowedExtraEmails();
+  return extra.includes(e);
+}
+
+// ---- Adgangsbillett (signert med HMAC, lagres som cookie) ----
+function makeTicket(email: string): string {
+  const exp = Date.now() + config.ACCESS_TICKET_DAYS * 86400 * 1000;
+  const payload = `${email.toLowerCase()}|${exp}`;
+  const sig = createHmac('sha256', config.ACCESS_SECRET).update(payload).digest('hex');
+  return Buffer.from(`${payload}|${sig}`).toString('base64url');
+}
+function verifyTicket(ticket: string): boolean {
+  try {
+    const decoded = Buffer.from(ticket, 'base64url').toString('utf8');
+    const [email, exp, sig] = decoded.split('|');
+    if (!email || !exp || !sig) return false;
+    if (Number(exp) < Date.now()) return false;
+    const expected = createHmac('sha256', config.ACCESS_SECRET).update(`${email}|${exp}`).digest('hex');
+    const a = Buffer.from(sig), b = Buffer.from(expected);
+    return a.length === b.length && timingSafeEqual(a, b);
+  } catch { return false; }
+}
+function getCookie(req: express.Request, name: string): string | null {
+  const raw = req.header('cookie') || '';
+  for (const part of raw.split(';')) {
+    const [k, ...v] = part.trim().split('=');
+    if (k === name) return decodeURIComponent(v.join('='));
+  }
+  return null;
+}
+function hasValidTicket(req: express.Request): boolean {
+  const t = getCookie(req, 'sabi_access');
+  return t ? verifyTicket(t) : false;
+}
+
 // Sjekk om [checkIn, checkOut) overlapper en bekreftet/avventende booking eller blokkert dato
-async function rangeAvailable(checkIn: string, checkOut: string): Promise<boolean> {
+async function rangeAvailable(checkIn: string, checkOut: string, ignoreBookingId?: string): Promise<boolean> {
   // Bookinger som opptar plass: confirmed + pending (ikke utløpt)
   const { data: bk } = await supabase
     .from('bookings')
-    .select('check_in,check_out,status,verify_expires')
+    .select('id,check_in,check_out,status,verify_expires')
     .in('status', ['pending', 'confirmed']);
   for (const b of bk ?? []) {
+    if (ignoreBookingId && b.id === ignoreBookingId) continue; // ikke kollider med seg selv
     if (b.status === 'pending' && b.verify_expires && new Date(b.verify_expires) < new Date()) continue; // utløpt hold
     if (checkIn < b.check_out && b.check_in < checkOut) return false;
   }
   const { data: bl } = await supabase.from('blocked_dates').select('start_date,end_date');
   for (const d of bl ?? []) {
+    if (!d.start_date || !d.end_date) continue; // hopp over ev. ugyldige rader
     if (checkIn < d.end_date && d.start_date < checkOut) return false;
   }
   return true;
@@ -68,17 +116,96 @@ function adminOk(req: express.Request): boolean {
   try { return timingSafeEqual(a, b); } catch { return false; }
 }
 
-// ---------- Offentlig: ledighet (ingen persondata) ----------
+// Initialer fra navn: "Geir Elstad" -> "GE", "Ola" -> "OL"
+function initialsFromName(name: string): string {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Landkode (ISO) fra Nextron-e-postdomenet -> brukes til flagg i frontend
+function countryFromEmail(email: string): string | null {
+  const dom = (email || '').toLowerCase().split('@')[1] ?? '';
+  if (dom.endsWith('.no')) return 'NO';
+  if (dom.endsWith('.se')) return 'SE';
+  if (dom.endsWith('.dk')) return 'DK';
+  if (dom.endsWith('.fi')) return 'FI';
+  return null;
+}
+
+// ---------- Tilgangsport: be om lenke ----------
+app.post('/api/access/request', async (req, res) => {
+  const Body = z.object({ email: z.string().email(), lang: z.enum(['no', 'en']).default('no') });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldig e-post' });
+  const email = parsed.data.email.trim().toLowerCase();
+
+  // Svar alltid 200 (ikke avslør om en adresse finnes/er godkjent)
+  if (await emailMayAccess(email)) {
+    const token = randomUUID();
+    const expires = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+    await supabase.from('access_tokens').insert({ token, email, expires_at: expires });
+    try {
+      await sendAccessEmail({ to: email, lang: parsed.data.lang, token });
+    } catch (e) { console.error('Kunne ikke sende tilgangslenke:', e); }
+  }
+  res.json({ ok: true });
+});
+
+// ---------- Tilgangsport: bruk lenke (setter cookie) ----------
+app.get('/api/access/verify', async (req, res) => {
+  const token = String(req.query.token ?? '');
+  if (!token) return res.status(400).send(htmlPage('Ugyldig lenke', 'Lenken mangler en kode.'));
+  const { data: row } = await supabase.from('access_tokens').select('*').eq('token', token).single();
+  if (!row) return res.status(404).send(htmlPage('Ugyldig lenke', 'Lenken er ugyldig eller allerede brukt.'));
+  if (new Date(row.expires_at) < new Date()) {
+    return res.status(410).send(htmlPage('Lenken er utløpt', 'Be om en ny tilgangslenke på forsiden.'));
+  }
+  await supabase.from('access_tokens').update({ used_at: new Date().toISOString() }).eq('token', token);
+
+  const ticket = makeTicket(row.email);
+  const maxAge = config.ACCESS_TICKET_DAYS * 86400;
+  res.setHeader('Set-Cookie', `sabi_access=${encodeURIComponent(ticket)}; Path=/; Max-Age=${maxAge}; HttpOnly; SameSite=Lax; Secure`);
+  // Send brukeren til forsiden – cookien gjør at porten slipper dem inn
+  res.redirect('/');
+});
+
+// ---------- Sjekk om nettleseren har gyldig adgangsbillett ----------
+app.get('/api/access/check', (req, res) => {
+  res.json({ access: hasValidTicket(req) });
+});
+
+// ---------- Admin: ekstra godkjente e-poster ----------
+app.get('/api/admin/allowed-emails', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  res.json({ emails: await getAllowedExtraEmails() });
+});
+app.put('/api/admin/allowed-emails', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const Body = z.object({ emails: z.array(z.string().email()).max(200) });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldig liste' });
+  const clean = Array.from(new Set(parsed.data.emails.map(e => e.trim().toLowerCase())));
+  const { error } = await supabase.from('content').update({ allowed_emails: clean, updated_at: new Date().toISOString() }).eq('id', 1);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true, emails: clean });
+});
+
+// ---------- Offentlig: ledighet (begrenset persondata: kun initialer + land) ----------
 app.get('/api/availability', async (_req, res) => {
   try {
-    const out: { start: string; end: string; source: string }[] = [];
+    const out: { start: string; end: string; source: string; initials?: string; country?: string | null }[] = [];
     const { data: bk } = await supabase
       .from('bookings')
-      .select('check_in,check_out,status,verify_expires')
+      .select('check_in,check_out,status,verify_expires,name,email')
       .in('status', ['pending', 'confirmed']);
     for (const b of bk ?? []) {
       if (b.status === 'pending' && b.verify_expires && new Date(b.verify_expires) < new Date()) continue;
-      out.push({ start: b.check_in, end: b.check_out, source: 'booking' });
+      out.push({
+        start: b.check_in, end: b.check_out, source: 'booking',
+        initials: initialsFromName(b.name), country: countryFromEmail(b.email),
+      });
     }
     const { data: bl } = await supabase.from('blocked_dates').select('start_date,end_date,source');
     for (const d of bl ?? []) out.push({ start: d.start_date, end: d.end_date, source: d.source });
@@ -110,9 +237,9 @@ app.post('/api/bookings', async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
   const b = parsed.data;
 
-  // Domenesjekk på server (frontend kan omgås)
-  if (!emailAllowed(b.email)) {
-    return res.status(403).json({ error: 'Kun e-post fra nextron.no/.se/.dk/.fi kan booke.' });
+  // Domenesjekk på server (frontend kan omgås) – Nextron-domene eller godkjent ekstra-adresse
+  if (!(await emailMayAccess(b.email))) {
+    return res.status(403).json({ error: 'Kun e-post fra nextron.no/.se/.dk/.fi (eller en godkjent adresse) kan booke.' });
   }
   // Datoregler
   const n = nights(b.checkIn, b.checkOut);
@@ -165,7 +292,7 @@ app.get('/api/verify', async (req, res) => {
     return res.status(410).send(htmlPage('Lenken er utløpt', 'Bookingen ble ikke bekreftet i tide. Vennligst book på nytt.'));
   }
   // Dobbeltsjekk ledighet (i tilfelle noe ble booket i mellomtiden)
-  if (!(await rangeAvailable(booking.check_in, booking.check_out))) {
+  if (!(await rangeAvailable(booking.check_in, booking.check_out, booking.id))) {
     await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
     return res.status(409).send(htmlPage('Datoene ble opptatt', 'Dessverre ble datoene booket av noen andre før du rakk å bekrefte.'));
   }

@@ -68,6 +68,29 @@ export async function sendVerificationEmail(opts: {
   await transporter.sendMail({ from: config.MAIL_FROM, to: opts.to, subject: t.subject, html });
 }
 
+export async function sendAccessEmail(opts: { to: string; lang: string; token: string }) {
+  if (!transporter || !config.MAIL_FROM) {
+    console.warn('SMTP ikke konfigurert – hopper over tilgangslenke.');
+    return;
+  }
+  const en = opts.lang === 'en';
+  const link = `${config.PUBLIC_URL}/api/access/verify?token=${encodeURIComponent(opts.token)}`;
+  const subject = en ? 'Your access link – Nextron Duquesa' : 'Din tilgangslenke – Nextron Duquesa';
+  const cta = en ? 'Open the booking site' : 'Åpne bookingsiden';
+  const body = en
+    ? 'Click the button below to access the Nextron Duquesa booking site. The link is valid for 24 hours, and your access lasts for 30 days on this device.'
+    : 'Trykk på knappen under for å få tilgang til Nextron Duquesa bookingside. Lenken er gyldig i 24 timer, og tilgangen varer i 30 dager på denne enheten.';
+  const html = shell(`
+    <p>${en ? 'Hi,' : 'Hei,'}</p>
+    <p>${body}</p>
+    <p style="text-align:center;margin:26px 0">
+      <a href="${link}" style="background:#1b2a5e;color:#fff;text-decoration:none;padding:13px 26px;border-radius:10px;font-weight:600;display:inline-block">${cta}</a>
+    </p>
+    <p style="font-size:12px;color:#6b7280">${link}</p>
+  `);
+  await transporter.sendMail({ from: config.MAIL_FROM, to: opts.to, subject, html });
+}
+
 export async function sendConfirmedEmail(opts: {
   to: string; name: string; lang: string; checkIn: string; checkOut: string; keyboxCode: string; extraText?: string;
 }) {

@@ -44,9 +44,20 @@ create table if not exists content (
   airbnb_ical_url text,
   keybox_code text default '',     -- sendes i bekreftelses-e-post, vises ikke offentlig
   email_text jsonb,                -- { no:"...", en:"..." } ekstra tekst i bekreftelses-e-post
+  allowed_emails jsonb default '[]'::jsonb,  -- ekstra e-poster (utenfor Nextron) som får tilgang + booke
   updated_at timestamptz not null default now(),
   constraint content_singleton check (id = 1)
 );
+
+-- Engangslenker for tilgang til siden (porten)
+create table if not exists access_tokens (
+  token text primary key,
+  email text not null,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  used_at timestamptz
+);
+create index if not exists access_tokens_email_idx on access_tokens (email);
 
 insert into content (id, info, airbnb_ical_url, keybox_code)
 values (1, null, null, '')

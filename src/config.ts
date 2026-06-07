@@ -29,6 +29,10 @@ export const config = {
   // Admin
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
 
+  // Hemmelig nøkkel for å signere adgangsbilletter (porten). Sett en lang tilfeldig verdi.
+  ACCESS_SECRET: process.env.ACCESS_SECRET ?? process.env.ADMIN_PASSWORD ?? 'endre-meg',
+  ACCESS_TICKET_DAYS: 30,
+
   // Booking-regler
   MIN_NIGHTS: 4,
   MAX_NIGHTS: 14,
