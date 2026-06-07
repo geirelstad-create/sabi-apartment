@@ -772,12 +772,17 @@ async function adminLoadCms(){
     <pre id="airbnb-debug-out" style="display:none;white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12px;margin-top:12px;"></pre>`;
   $('#airbnb-url').value=airbnbUrl;
   $('#airbnb-save').onclick=async ()=>{
+    const val = ($('#airbnb-url').value||'').trim();
+    if(!val){ toast('URL-feltet er tomt – lim inn iCal-lenken først.'); return; }
+    if(!/^https?:\/\//i.test(val)){ toast('Lenken må starte med https://'); return; }
+    $('#airbnb-save').disabled=true; $('#airbnb-save').textContent='Lagrer & synker …';
     try{
-      const r = await api('/api/admin/airbnb',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({airbnbIcalUrl:$('#airbnb-url').value.trim()}) });
+      const r = await api('/api/admin/airbnb',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({airbnbIcalUrl:val}) });
       toast('Synket! Hentet '+(r&&typeof r.imported==='number'?r.imported:'?')+' blokkerte perioder.');
       loadBlocked();
     }
     catch(e){ toast(e.message || 'Kunne ikke synke.'); }
+    $('#airbnb-save').disabled=false; $('#airbnb-save').textContent='Lagre & synk nå';
   };
   $('#airbnb-debug').onclick=async ()=>{
     const out=$('#airbnb-debug-out'); out.style.display='block'; out.textContent='Henter …';
