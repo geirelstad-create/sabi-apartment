@@ -662,42 +662,108 @@ $('#admin-tab-airbnb').onclick=()=>adminTab('airbnb');
 function adminTab(which){
   ['bookings','cms','airbnb'].forEach(x=>$('#admin-'+x).style.display = x===which?'block':'none');
 }
+function bookingFormHtml(prefix, b){
+  b = b || {};
+  return `
+    <div class="field"><label>Navn</label><input id="${prefix}-name" value="${(b.name||'').replace(/"/g,'&quot;')}" placeholder="Ola Nordmann"></div>
+    <div class="field"><label>E-post</label><input id="${prefix}-email" type="email" value="${(b.email||'').replace(/"/g,'&quot;')}" placeholder="navn@nextron.no"></div>
+    <div style="display:flex;gap:10px;">
+      <div class="field" style="flex:1;"><label>Innsjekk</label><input id="${prefix}-in" type="date" value="${b.checkIn||''}"></div>
+      <div class="field" style="flex:1;"><label>Utsjekk</label><input id="${prefix}-out" type="date" value="${b.checkOut||''}"></div>
+    </div>
+    <div class="field"><label>Antall gjester</label><input id="${prefix}-guests" type="number" min="1" max="6" value="${b.guests||2}"></div>
+    <div class="field"><label>Melding (valgfritt)</label><input id="${prefix}-msg" value="${(b.message||'').replace(/"/g,'&quot;')}"></div>`;
+}
+
 async function adminLoadBookings(){
   const host=$('#admin-bookings');
   try{
     const list=await api('/api/admin/bookings',{ headers:{'x-admin-password':adminPass} });
-    if(!list.length){ host.innerHTML='<div class="empty-sum">Ingen bookinger.</div>'; return; }
-    host.innerHTML=list.map(b=>{
+    const topBtn = `<button type="button" class="navlink" id="bk-new-btn" style="margin-bottom:14px;">+ Ny booking</button>
+      <div id="bk-new-form" style="display:none;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;">
+        ${bookingFormHtml('nbk', {})}
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px;">
+          <input type="checkbox" id="nbk-confirm" checked> Bekreft direkte (uten e-postverifisering)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px;">
+          <input type="checkbox" id="nbk-mail"> Send bekreftelsesmail med nøkkelkode
+        </label>
+        <button class="btn" id="nbk-save" style="margin-top:12px;">Opprett booking</button>
+      </div>`;
+    if(!list.length){ host.innerHTML=topBtn+'<div class="empty-sum">Ingen bookinger.</div>'; wireNewBooking(); return; }
+    host.innerHTML=topBtn+list.map(b=>{
       const stCls = b.status==='confirmed'?'st-confirmed':(b.source==='airbnb'?'st-airbnb':'st-pending');
       const stTxt = b.source==='airbnb'?'Airbnb':(b.status==='confirmed'?'Bekreftet':(b.status==='pending'?'Avventer':b.status));
-      return `<div class="bk">
-        <div>
+      const editable = b.source!=='airbnb';
+      return `<div class="bk" data-bk='${JSON.stringify({id:b.id,name:b.name,email:b.email,checkIn:b.checkIn,checkOut:b.checkOut,guests:b.guests,message:b.message}).replace(/'/g,"&#39;")}'>
+        <div style="flex:1;">
           <div class="bk-room">${b.checkIn} → ${b.checkOut}</div>
           <div class="bk-meta">${b.name||'-'} · ${b.email||''} ${b.guests?('· '+b.guests+' gj.'):''}</div>
-          ${b.source!=='airbnb'?`<button type="button" class="bk-del" data-del="${b.id}">Kanseller</button>`:''}
+          ${editable?`<div style="display:flex;gap:6px;margin-top:6px;"><button type="button" class="bk-del" data-edit="${b.id}">Endre</button><button type="button" class="bk-del" data-del="${b.id}">Kanseller</button></div>`:''}
+          <div class="bk-edit" id="edit-${b.id}" style="display:none;margin-top:10px;"></div>
         </div>
         <span class="bk-status ${stCls}">${stTxt}</span>
       </div>`;
     }).join('');
+    wireNewBooking();
   }catch(e){
     host.innerHTML='<div class="empty-sum">Kunne ikke laste bookinger.</div>';
   }
 }
-// Event delegation – tåler re-render og er mer robust enn å feste handler per knapp
+function wireNewBooking(){
+  const nb=$('#bk-new-btn'); if(!nb) return;
+  nb.onclick=()=>{ const f=$('#bk-new-form'); f.style.display = f.style.display==='none'?'block':'none'; };
+  const save=$('#nbk-save'); if(!save) return;
+  save.onclick=async ()=>{
+    const payload={
+      name:$('#nbk-name').value.trim(), email:$('#nbk-email').value.trim(),
+      checkIn:$('#nbk-in').value, checkOut:$('#nbk-out').value,
+      guests:parseInt($('#nbk-guests').value||'2',10), message:$('#nbk-msg').value.trim(),
+      confirmNow:$('#nbk-confirm').checked, sendMail:$('#nbk-mail').checked, lang:'no'
+    };
+    if(!payload.name||!payload.email||!payload.checkIn||!payload.checkOut){ toast('Fyll inn navn, e-post og datoer.'); return; }
+    save.disabled=true; save.textContent='Oppretter …';
+    try{
+      const r=await api('/api/admin/bookings',{ method:'POST', headers:{'x-admin-password':adminPass}, body:JSON.stringify(payload) });
+      toast(r.status==='confirmed'?'Booking opprettet og bekreftet.':'Booking opprettet – verifiseringslenke sendt.');
+      await adminLoadBookings(); loadBlocked();
+    }catch(e){ toast(e.message||'Kunne ikke opprette.'); save.disabled=false; save.textContent='Opprett booking'; }
+  };
+}
+// Event delegation – kanseller + endre
 $('#admin-bookings').addEventListener('click', async (ev)=>{
-  const btn = ev.target.closest('[data-del]');
-  if(!btn) return;
-  const id = btn.dataset.del;
-  if(!confirm('Kansellere denne bookingen?')) return;
-  btn.disabled = true; btn.textContent = 'Kansellerer …';
-  try{
-    await api('/api/admin/bookings/'+encodeURIComponent(id),{ method:'DELETE', headers:{'x-admin-password':adminPass} });
-    toast('Bookingen er kansellert.');
-    await adminLoadBookings();
-    loadBlocked();
-  }catch(e){
-    toast(e.message || 'Kunne ikke kansellere.');
-    btn.disabled = false; btn.textContent = 'Kanseller';
+  const delBtn = ev.target.closest('[data-del]');
+  const editBtn = ev.target.closest('[data-edit]');
+  if(delBtn){
+    const id = delBtn.dataset.del;
+    if(!confirm('Kansellere denne bookingen?')) return;
+    delBtn.disabled = true; delBtn.textContent = 'Kansellerer …';
+    try{
+      await api('/api/admin/bookings/'+encodeURIComponent(id),{ method:'DELETE', headers:{'x-admin-password':adminPass} });
+      toast('Bookingen er kansellert.'); await adminLoadBookings(); loadBlocked();
+    }catch(e){ toast(e.message || 'Kunne ikke kansellere.'); delBtn.disabled=false; delBtn.textContent='Kanseller'; }
+    return;
+  }
+  if(editBtn){
+    const id = editBtn.dataset.edit;
+    const row = editBtn.closest('.bk');
+    const data = JSON.parse((row.getAttribute('data-bk')||'{}').replace(/&#39;/g,"'"));
+    const box = $('#edit-'+id);
+    if(box.style.display==='block'){ box.style.display='none'; return; }
+    box.style.display='block';
+    box.innerHTML = bookingFormHtml('e'+id, data) + `<button class="btn" id="esave-${id}" style="margin-top:10px;">Lagre endringer</button>`;
+    $('#esave-'+id).onclick=async ()=>{
+      const payload={
+        name:$('#e'+id+'-name').value.trim(), email:$('#e'+id+'-email').value.trim(),
+        checkIn:$('#e'+id+'-in').value, checkOut:$('#e'+id+'-out').value,
+        guests:parseInt($('#e'+id+'-guests').value||'2',10), message:$('#e'+id+'-msg').value.trim()
+      };
+      try{
+        await api('/api/admin/bookings/'+encodeURIComponent(id),{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify(payload) });
+        toast('Endringer lagret.'); await adminLoadBookings(); loadBlocked();
+      }catch(e){ toast(e.message||'Kunne ikke lagre.'); }
+    };
+    return;
   }
 });
 async function adminLoadCms(){
