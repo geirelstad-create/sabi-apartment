@@ -98,7 +98,8 @@
   .day.disabled{ color:#c2c2c2; cursor:not-allowed; background:transparent; }
   .day.blocked{ background:repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 4px,#dcd8cf 4px,#dcd8cf 8px); color:#9a958c; cursor:not-allowed; }
   .day.blocked.airbnb::after{ content:'A'; position:absolute; top:2px; right:4px; font-size:8px; font-weight:700; color:#ff5a5f; }
-  .day .daytag{ position:absolute; bottom:1px; left:0; right:0; text-align:center; font-size:8.5px; font-weight:700; line-height:1; color:#41506b; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
+  .day .daytag{ position:absolute; bottom:1px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:1px; font-size:8.5px; font-weight:700; line-height:1; color:#41506b; letter-spacing:.2px; white-space:nowrap; overflow:hidden; }
+  .day .daytag-ini{ font-size:8.5px; font-weight:700; }
   .day.blocked{ position:relative; }
   .day.sel{ background:var(--navy); color:#fff; border-color:var(--navy); }
   .day.inrange{ background:var(--cyan); color:#fff; }
@@ -458,11 +459,37 @@ function isBlocked(d){
   for(const b of blocked){ if(x>=b.start && x<b.end) return b; }
   return null;
 }
-// ISO-landkode -> flagg-emoji (NO -> 🇳🇴)
-function countryFlag(cc){
-  if(!cc || cc.length!==2) return '';
-  const A=0x1F1E6; const base='A'.charCodeAt(0);
-  return String.fromCodePoint(A + cc.toUpperCase().charCodeAt(0)-base, A + cc.toUpperCase().charCodeAt(1)-base);
+// ISO-landkode -> liten SVG-flagg (vises likt på alle enheter, også Windows som ikke har flagg-emoji)
+function countryFlagSVG(cc){
+  if(!cc) return '';
+  const h=11, w=15; // liten flaggstørrelse
+  const nordic = {
+    // Nordiske kors-flagg: bakgrunn + kors. cross = korsfarge, bg = bakgrunn.
+    NO: {bg:'#ba0c2f', cross:'#fff', inner:'#00205b'}, // rødt med hvit+blå kors
+    SE: {bg:'#006aa7', cross:'#fecc00'},
+    DK: {bg:'#c8102e', cross:'#fff'},
+    FI: {bg:'#fff', cross:'#003580'},
+  };
+  const c = nordic[cc.toUpperCase()];
+  if(!c) return '';
+  // kors: vertikal stolpe forskjøvet til venstre, horisontal i midten
+  const vx = 5, vw = 2.2;   // vertikal arm x-posisjon og bredde
+  const hy = (h-2.2)/2, hh = 2.2; // horisontal arm
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:inline-block;vertical-align:-1px;border-radius:1px;margin-right:2px;">`;
+  svg += `<rect width="${w}" height="${h}" fill="${c.bg}"/>`;
+  if(c.inner){
+    // Norge: hvit kors (bredere) så blå kors oppå
+    const ow=3.4, oh=3.4;
+    svg += `<rect x="${5-(ow-vw)/2}" width="${ow}" height="${h}" fill="${c.cross}"/>`;
+    svg += `<rect y="${(h-oh)/2}" width="${w}" height="${oh}" fill="${c.cross}"/>`;
+    svg += `<rect x="${vx}" width="${vw}" height="${h}" fill="${c.inner}"/>`;
+    svg += `<rect y="${hy}" width="${w}" height="${hh}" fill="${c.inner}"/>`;
+  } else {
+    svg += `<rect x="${vx}" width="${vw}" height="${h}" fill="${c.cross}"/>`;
+    svg += `<rect y="${hy}" width="${w}" height="${hh}" fill="${c.cross}"/>`;
+  }
+  svg += `</svg>`;
+  return svg;
 }
 function rangeHasBlocked(a,b){ // [a,b)
   for(let x=new Date(a); x<b; x.setDate(x.getDate()+1)){ if(isBlocked(x)) return true; }
@@ -509,13 +536,13 @@ function buildMonth(m){
         cell.title='Airbnb';
       } else {
         // intern booking: vis flagg + initialer
-        const flag = countryFlag(blk.country);
+        const flag = countryFlagSVG(blk.country);
         const ini = blk.initials || '';
         cell.title = (ini?ini+' ':'') + '· opptatt';
         if(ini || flag){
           const tag=document.createElement('span');
           tag.className='daytag';
-          tag.textContent = (flag?flag:'') + (ini?ini:'');
+          tag.innerHTML = (flag||'') + (ini?'<span class="daytag-ini">'+ini+'</span>':'');
           cell.appendChild(tag);
         }
       }
