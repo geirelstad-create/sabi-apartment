@@ -401,6 +401,34 @@ app.post('/api/admin/sync-airbnb', async (req, res) => {
   }
 });
 
+// Diagnose: viser nøyaktig hva Render mottar fra Airbnb (kun admin)
+app.get('/api/admin/airbnb-debug', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { data } = await supabase.from('content').select('airbnb_ical_url').eq('id', 1).single();
+  const url = data?.airbnb_ical_url ?? '';
+  if (!url) return res.json({ urlSet: false });
+  const out: any = { urlSet: true, urlLength: url.length, urlTail: url.slice(-24) };
+  try {
+    const resp = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; SabiApartmentBooking/1.0; +https://www.sabi-apartment.no)',
+        'Accept': 'text/calendar, text/plain, */*',
+      },
+      redirect: 'follow',
+    });
+    const text = await resp.text();
+    out.httpStatus = resp.status;
+    out.contentType = resp.headers.get('content-type');
+    out.bodyLength = text.length;
+    out.hasVCALENDAR = text.includes('BEGIN:VCALENDAR');
+    out.veventCount = (text.match(/BEGIN:VEVENT/g) || []).length;
+    out.bodyStart = text.slice(0, 300);
+  } catch (e) {
+    out.fetchError = e instanceof Error ? e.message : String(e);
+  }
+  res.json(out);
+});
+
 // ---------- Enkel HTML-side for verifiseringssvar ----------
 function htmlPage(title: string, body: string): string {
   return `<!DOCTYPE html><html lang="no"><head><meta charset="utf-8">
