@@ -99,7 +99,7 @@
   .day.empty{ background:transparent; cursor:default; }
   .day.disabled{ color:#c2c2c2; cursor:not-allowed; background:transparent; }
   .day.blocked{ background:repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 4px,#dcd8cf 4px,#dcd8cf 8px); color:#9a958c; cursor:not-allowed; }
-  .day.blocked.airbnb::after{ content:'A'; position:absolute; top:2px; right:4px; font-size:8px; font-weight:700; color:#ff5a5f; }
+  .day.blocked.airbnb::after{ content:''; position:absolute; top:2px; right:3px; width:11px; height:11px; background-repeat:no-repeat; background-position:center; background-size:contain; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff5a5f'%3E%3Cpath d='M12 3 2 11h2v9h6v-6h4v6h6v-9h2z'/%3E%3C/svg%3E"); }
   .day .daytag{ position:absolute; bottom:1px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:1px; font-size:8.5px; font-weight:700; line-height:1; color:#41506b; letter-spacing:.2px; white-space:nowrap; overflow:hidden; }
   .day .daytag-ini{ font-size:8.5px; font-weight:700; }
   .day.blocked{ position:relative; }
