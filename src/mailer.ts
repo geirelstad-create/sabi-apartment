@@ -113,6 +113,48 @@ export async function sendCollisionAlert(collisions: Array<{ airbnbStart: string
   });
 }
 
+export async function sendTipVerifyEmail(opts: { to: string; name: string; lang: string; title: string; token: string }) {
+  if (!transporter || !config.MAIL_FROM) {
+    console.warn('SMTP ikke konfigurert – hopper over tips-bekreftelse.');
+    return;
+  }
+  const en = opts.lang === 'en';
+  const link = `${config.PUBLIC_URL}/api/tips/verify?token=${encodeURIComponent(opts.token)}`;
+  const subject = en ? 'Confirm your tip – Nextron Duquesa' : 'Bekreft tipset ditt – Nextron Duquesa';
+  const cta = en ? 'Publish my tip' : 'Publiser tipset mitt';
+  const intro = en
+    ? `Thanks for sharing a tip${opts.title ? ` ("${escapeHtml(opts.title)}")` : ''}! Click below to confirm and publish it for other guests. The link is valid for 48 hours.`
+    : `Takk for at du deler et tips${opts.title ? ` («${escapeHtml(opts.title)}»)` : ''}! Trykk under for å bekrefte og publisere det for andre gjester. Lenken er gyldig i 48 timer.`;
+  const html = shell(`
+    <p>${en ? 'Hi' : 'Hei'} ${escapeHtml(opts.name)},</p>
+    <p>${intro}</p>
+    <p style="text-align:center;margin:26px 0">
+      <a href="${link}" style="background:#1b2a5e;color:#fff;text-decoration:none;padding:13px 26px;border-radius:10px;font-weight:600;display:inline-block">${cta}</a>
+    </p>
+    <p style="font-size:12px;color:#6b7280">${link}</p>
+  `);
+  await transporter.sendMail({ from: config.MAIL_FROM, to: opts.to, subject, html });
+}
+
+export async function sendAdminBookingAlert(opts: { name: string; email: string; checkIn: string; checkOut: string; guests: number; message?: string }) {
+  if (!transporter || !config.MAIL_FROM || !config.MAIL_ADMIN) return;
+  const html = shell(`
+    <p><b>Ny booking bekreftet.</b></p>
+    <table style="border-collapse:collapse;font-size:14px;margin-top:8px">
+      <tr><td style="padding:6px 10px;border:1px solid #e0ddd3"><b>Navn</b></td><td style="padding:6px 10px;border:1px solid #e0ddd3">${escapeHtml(opts.name)}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #e0ddd3"><b>E-post</b></td><td style="padding:6px 10px;border:1px solid #e0ddd3">${escapeHtml(opts.email)}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #e0ddd3"><b>Innsjekk</b></td><td style="padding:6px 10px;border:1px solid #e0ddd3">${opts.checkIn}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #e0ddd3"><b>Utsjekk</b></td><td style="padding:6px 10px;border:1px solid #e0ddd3">${opts.checkOut}</td></tr>
+      <tr><td style="padding:6px 10px;border:1px solid #e0ddd3"><b>Gjester</b></td><td style="padding:6px 10px;border:1px solid #e0ddd3">${opts.guests}</td></tr>
+      ${opts.message ? `<tr><td style="padding:6px 10px;border:1px solid #e0ddd3"><b>Melding</b></td><td style="padding:6px 10px;border:1px solid #e0ddd3">${escapeHtml(opts.message)}</td></tr>` : ''}
+    </table>`);
+  await transporter.sendMail({
+    from: config.MAIL_FROM, to: config.MAIL_ADMIN,
+    subject: `Ny booking: ${opts.name} (${opts.checkIn} → ${opts.checkOut})`,
+    html,
+  });
+}
+
 export async function sendConfirmedEmail(opts: {
   to: string; name: string; lang: string; checkIn: string; checkOut: string; keyboxCode: string; extraText?: string;
 }) {

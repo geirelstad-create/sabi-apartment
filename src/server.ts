@@ -7,7 +7,7 @@ import { randomUUID, timingSafeEqual, createHmac } from 'node:crypto';
 import { z } from 'zod';
 import { config } from './config.js';
 import { supabase } from './supabase.js';
-import { sendVerificationEmail, sendConfirmedEmail, sendAccessEmail, sendCollisionAlert } from './mailer.js';
+import { sendVerificationEmail, sendConfirmedEmail, sendAccessEmail, sendCollisionAlert, sendTipVerifyEmail, sendAdminBookingAlert } from './mailer.js';
 import { syncAirbnb } from './airbnb.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -139,6 +139,79 @@ function countryFromEmail(email: string): string | null {
   if (dom.endsWith('.fi')) return 'FI';
   return null;
 }
+
+// ---------- Offentlig: gjestetips ----------
+app.get('/api/tips', async (_req, res) => {
+  const { data } = await supabase
+    .from('tips')
+    .select('category,title,body,url,name,created_at,published_at')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false });
+  res.json(data ?? []);
+});
+
+app.post('/api/tips', async (req, res) => {
+  const Body = z.object({
+    category: z.enum(['food', 'visit', 'activity', 'other']).default('other'),
+    title: z.string().min(2).max(120),
+    body: z.string().min(2).max(2000),
+    url: z.string().url().max(500).optional().or(z.literal('')),
+    name: z.string().min(2).max(80),
+    email: z.string().email(),
+    lang: z.enum(['no', 'en']).default('no'),
+  });
+  const parsed = Body.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: 'Ugyldige felt' });
+  const t = parsed.data;
+
+  // Kun Nextron-domener eller godkjente ekstra-adresser kan tipse
+  if (!(await emailMayAccess(t.email))) {
+    return res.status(403).json({ error: 'Kun e-post fra nextron.no/.se/.dk/.fi (eller en godkjent adresse) kan legge inn tips.' });
+  }
+
+  const token = randomUUID();
+  const verifyExpires = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+  const { error } = await supabase.from('tips').insert({
+    category: t.category, title: t.title, body: t.body, url: t.url || null,
+    name: t.name, email: t.email.toLowerCase(), lang: t.lang,
+    status: 'pending', verify_token: token, verify_expires: verifyExpires,
+  });
+  if (error) return res.status(500).json({ error: 'Kunne ikke lagre tipset.' });
+  try {
+    await sendTipVerifyEmail({ to: t.email, name: t.name, lang: t.lang, title: t.title, token });
+  } catch (e) { console.error('Tips-bekreftelsesmail feilet:', e); }
+  res.json({ ok: true });
+});
+
+app.get('/api/tips/verify', async (req, res) => {
+  const token = String(req.query.token ?? '');
+  if (!token) return res.status(400).send(htmlPage('Ugyldig lenke', 'Lenken mangler en kode.'));
+  const { data: tip } = await supabase.from('tips').select('*').eq('verify_token', token).maybeSingle();
+  if (!tip) return res.status(404).send(htmlPage('Ugyldig lenke', 'Lenken er ugyldig eller allerede brukt.'));
+  if (tip.status === 'published') {
+    return res.send(htmlPage('Allerede publisert', 'Tipset ditt er allerede publisert. Takk!'));
+  }
+  if (tip.verify_expires && new Date(tip.verify_expires) < new Date()) {
+    return res.status(410).send(htmlPage('Lenken er utløpt', 'Legg gjerne inn tipset på nytt.'));
+  }
+  await supabase.from('tips').update({
+    status: 'published', published_at: new Date().toISOString(), verify_token: null,
+  }).eq('id', tip.id);
+  res.send(htmlPage('Takk for tipset!', 'Tipset ditt er nå publisert og synlig for andre gjester.'));
+});
+
+// ---------- Admin: tips ----------
+app.get('/api/admin/tips', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { data } = await supabase.from('tips').select('*').order('created_at', { ascending: false });
+  res.json(data ?? []);
+});
+app.delete('/api/admin/tips/:id', async (req, res) => {
+  if (!adminOk(req)) return res.status(401).json({ error: 'Ikke autorisert' });
+  const { error } = await supabase.from('tips').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
 
 // ---------- Tilgangsport: be om lenke ----------
 app.post('/api/access/request', async (req, res) => {
@@ -367,6 +440,15 @@ app.get('/api/verify', async (req, res) => {
       extraText: extra,
     });
   } catch (e) { console.error('Kunne ikke sende bekreftelse:', e); }
+
+  // Varsle admin om ny booking
+  try {
+    await sendAdminBookingAlert({
+      name: booking.name, email: booking.email,
+      checkIn: booking.check_in, checkOut: booking.check_out,
+      guests: booking.guests, message: booking.message,
+    });
+  } catch (e) { console.error('Kunne ikke sende admin-varsel:', e); }
 
   const en = booking.lang === 'en';
   res.send(htmlPage(
