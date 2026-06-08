@@ -116,6 +116,12 @@
   .sum-line:last-of-type{ border-bottom:none; }
   .sum-line b{ color:var(--navy); }
   .empty-sum{ text-align:center; color:var(--muted); padding:18px 0; }
+  .tip-card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:12px; max-width:600px; }
+  .tip-cat{ font-size:12px; font-weight:600; color:var(--cyan-deep); margin-bottom:4px; }
+  .tip-title{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+  .tip-body{ font-size:14.5px; color:#3a3a3a; line-height:1.5; }
+  .tip-body a{ color:var(--cyan-deep); font-weight:600; white-space:nowrap; }
+  .tip-by{ font-size:13px; color:var(--muted); margin-top:8px; font-style:italic; }
   .field{ margin-top:14px; }
   .field label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:5px; }
   .field input, .field textarea{ width:100%; font:inherit; font-size:15px; padding:11px 13px; border:1px solid var(--line); border-radius:10px; background:var(--paper); color:var(--ink); }
@@ -206,6 +212,7 @@
       <button class="navlink active" data-view="book" data-i="nav_book">Book</button>
       <button class="navlink" data-view="info" data-i="nav_info">Info</button>
       <button class="navlink" data-view="gallery" data-i="nav_gallery">Bilder</button>
+      <button class="navlink" data-view="tips" data-i="nav_tips">Tips</button>
       <div class="lang">
         <button data-lang="no" class="active">NO</button>
         <button data-lang="en">EN</button>
@@ -318,7 +325,35 @@
   </section>
 </div>
 
-<!-- ===== ADMIN VIEW (hidden, #admin) ===== -->
+<!-- ===== TIPS VIEW ===== -->
+<div class="view" id="view-tips">
+  <section class="wrap">
+    <div class="sec-title" data-i="tips_title">Gjestetips</div>
+    <div class="sec-sub" data-i="tips_sub">Anbefalinger fra Nextron-kolleger – spisesteder, steder å besøke og ting å gjøre.</div>
+    <button class="navlink" id="tips-new-btn" style="margin-bottom:16px;" data-i="tips_add">+ Del et tips</button>
+    <div id="tips-form" style="display:none;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;max-width:600px;">
+      <div class="field"><label data-i="tips_cat">Kategori</label>
+        <select id="tips-cat" style="width:100%;font:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--paper);">
+          <option value="food">🍽️ Spisested</option>
+          <option value="visit">📍 Sted å besøke</option>
+          <option value="activity">🏄 Ting å gjøre</option>
+          <option value="other">💡 Annet</option>
+        </select>
+      </div>
+      <div class="field"><label data-i="tips_ttl">Tittel</label><input id="tips-title" maxlength="120" placeholder="F.eks. Restaurante La Marina"></div>
+      <div class="field"><label data-i="tips_body">Beskrivelse</label><textarea id="tips-body" rows="3" maxlength="2000" placeholder="Hva vil du anbefale, og hvorfor?"></textarea></div>
+      <div class="field"><label data-i="tips_url">Lenke (valgfritt)</label><input id="tips-url" placeholder="https://…"></div>
+      <div style="display:flex;gap:10px;">
+        <div class="field" style="flex:1;"><label data-i="tips_name">Navn</label><input id="tips-name" maxlength="80" placeholder="Ditt navn"></div>
+        <div class="field" style="flex:1;"><label data-i="tips_email">E-post</label><input id="tips-email" type="email" placeholder="navn@nextron.no"></div>
+      </div>
+      <button class="btn" id="tips-submit" data-i="tips_submit">Send inn tips</button>
+      <div class="hint" style="margin-top:8px;" data-i="tips_hint">Du får en e-post med en bekreftelseslenke. Tipset vises etter at du har bekreftet.</div>
+    </div>
+    <div id="tips-list"></div>
+  </section>
+</div>
+
 <div class="view" id="view-admin">
   <section class="wrap">
     <div class="sec-title">Administrasjon</div>
@@ -332,10 +367,12 @@
           <button class="navlink" id="admin-tab-bookings">Bookinger</button>
           <button class="navlink" id="admin-tab-cms">Tekst &amp; lenker</button>
           <button class="navlink" id="admin-tab-airbnb">Airbnb-synk</button>
+          <button class="navlink" id="admin-tab-tips">Tips</button>
         </div>
         <div id="admin-bookings"><div class="empty-sum">Laster …</div></div>
         <div id="admin-cms" style="display:none;"></div>
         <div id="admin-airbnb" style="display:none;"></div>
+        <div id="admin-tips" style="display:none;"></div>
         <button class="bk-del" id="admin-logout" style="margin-top:16px;">Logg ut</button>
       </div>
     </div>
@@ -352,7 +389,11 @@
 // ---------- i18n ----------
 const I18N = {
   no:{
-    nav_book:"Book", nav_info:"Info", nav_gallery:"Bilder",
+    nav_book:"Book", nav_info:"Info", nav_gallery:"Bilder", nav_tips:"Tips",
+    tips_title:"Gjestetips", tips_sub:"Anbefalinger fra Nextron-kolleger – spisesteder, steder å besøke og ting å gjøre.",
+    tips_add:"+ Del et tips", tips_cat:"Kategori", tips_ttl:"Tittel", tips_body:"Beskrivelse", tips_url:"Lenke (valgfritt)",
+    tips_name:"Navn", tips_email:"E-post", tips_submit:"Send inn tips",
+    tips_hint:"Du får en e-post med en bekreftelseslenke. Tipset vises etter at du har bekreftet.",
     hero_eyebrow:"Bedriftsintern ferieleilighet",
     hero_lead:"Book Nextrons ferieleilighet i Marina de la Duquesa på Costa del Sol – gratis for ansatte. To soverom, havutsikt og stranden rett utenfor.",
     fact_size:"leilighet", fact_beds:"sengeplasser", fact_bedrooms:"soverom", fact_beach:"Blue flag-strand",
@@ -377,7 +418,11 @@ const I18N = {
     blocked_airbnb:"Airbnb"
   },
   en:{
-    nav_book:"Book", nav_info:"Info", nav_gallery:"Photos",
+    nav_book:"Book", nav_info:"Info", nav_gallery:"Photos", nav_tips:"Tips",
+    tips_title:"Guest tips", tips_sub:"Recommendations from Nextron colleagues – places to eat, visit and things to do.",
+    tips_add:"+ Share a tip", tips_cat:"Category", tips_ttl:"Title", tips_body:"Description", tips_url:"Link (optional)",
+    tips_name:"Name", tips_email:"Email", tips_submit:"Submit tip",
+    tips_hint:"You'll get an email with a confirmation link. Your tip appears once you confirm.",
     hero_eyebrow:"Company holiday apartment",
     hero_lead:"Book Nextron's holiday apartment in Marina de la Duquesa on the Costa del Sol – free for employees. Two bedrooms, sea view and the beach right outside.",
     fact_size:"apartment", fact_beds:"beds", fact_bedrooms:"bedrooms", fact_beach:"Blue flag beach",
@@ -647,6 +692,11 @@ function applyLang(){
     const k=el.dataset.i, v=I18N[LANG][k];
     if(typeof v==='string') el.textContent=v;
   });
+  // oppdater kategori-valg i tips-skjemaet
+  const sel=document.getElementById('tips-cat');
+  if(sel){ const cats=TIP_CAT[LANG]||TIP_CAT.no; Array.from(sel.options).forEach(o=>{ if(cats[o.value]) o.textContent=cats[o.value]; }); }
+  // hvis tips-visningen er åpen, oppdater listen til riktig språk
+  if(document.getElementById('view-tips')?.classList.contains('active')) loadTips();
   renderCalendar(); renderSummary(); renderInfo();
 }
 
@@ -655,11 +705,61 @@ function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const el=document.getElementById('view-'+name); if(el) el.classList.add('active');
   document.querySelectorAll('.navlink[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  if(name==='tips') loadTips();
   window.scrollTo({top:0,behavior:'smooth'});
 }
+
+const TIP_CAT = {
+  no:{food:'🍽️ Spisested', visit:'📍 Sted å besøke', activity:'🏄 Ting å gjøre', other:'💡 Annet'},
+  en:{food:'🍽️ Food', visit:'📍 Place to visit', activity:'🏄 Activity', other:'💡 Other'}
+};
+async function loadTips(){
+  const host=$('#tips-list'); if(!host) return;
+  try{
+    const list=await api('/api/tips');
+    if(!list.length){ host.innerHTML='<div class="empty-sum" data-i="tips_empty">'+(LANG==='en'?'No tips yet – be the first to share one!':'Ingen tips ennå – bli den første til å dele et!')+'</div>'; return; }
+    host.innerHTML=list.map(t=>{
+      const cat=(TIP_CAT[LANG]||TIP_CAT.no)[t.category]||'';
+      const link=t.url?` <a href="${t.url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener">${LANG==='en'?'Link':'Lenke'} ↗</a>`:'';
+      return `<div class="tip-card">
+        <div class="tip-cat">${cat}</div>
+        <div class="tip-title">${escapeH(t.title)}</div>
+        <div class="tip-body">${escapeH(t.body)}${link}</div>
+        <div class="tip-by">— ${escapeH(t.name)}</div>
+      </div>`;
+    }).join('');
+  }catch(e){ host.innerHTML='<div class="empty-sum">'+(LANG==='en'?'Could not load tips.':'Kunne ikke laste tips.')+'</div>'; }
+}
+function escapeH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 document.querySelectorAll('.navlink[data-view]').forEach(b=>{
   b.onclick=()=>showView(b.dataset.view);
 });
+// Tips-skjema
+(function(){
+  const nb=$('#tips-new-btn'); if(!nb) return;
+  nb.onclick=()=>{ const f=$('#tips-form'); f.style.display = f.style.display==='none'?'block':'none'; };
+  $('#tips-submit').onclick=async ()=>{
+    const payload={
+      category:$('#tips-cat').value,
+      title:$('#tips-title').value.trim(),
+      body:$('#tips-body').value.trim(),
+      url:$('#tips-url').value.trim(),
+      name:$('#tips-name').value.trim(),
+      email:$('#tips-email').value.trim(),
+      lang:LANG
+    };
+    if(!payload.title||!payload.body||!payload.name||!payload.email){ toast(LANG==='en'?'Please fill in title, description, name and email.':'Fyll inn tittel, beskrivelse, navn og e-post.'); return; }
+    if(payload.url && !/^https?:\/\//i.test(payload.url)){ toast(LANG==='en'?'Link must start with https://':'Lenken må starte med https://'); return; }
+    const btn=$('#tips-submit'); btn.disabled=true; btn.textContent=LANG==='en'?'Sending …':'Sender …';
+    try{
+      await api('/api/tips',{ method:'POST', body:JSON.stringify(payload) });
+      $('#tips-form').style.display='none';
+      ['tips-title','tips-body','tips-url','tips-name','tips-email'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+      toast(LANG==='en'?'Thanks! Check your email to confirm and publish.':'Takk! Sjekk e-posten for å bekrefte og publisere.');
+    }catch(e){ toast(e.message||(LANG==='en'?'Could not submit.':'Kunne ikke sende inn.')); }
+    btn.disabled=false; btn.textContent=LANG==='en'?'Submit tip':'Send inn tips';
+  };
+})();
 document.querySelectorAll('.lang button').forEach(b=>{
   b.onclick=()=>{
     LANG=b.dataset.lang;
@@ -667,8 +767,8 @@ document.querySelectorAll('.lang button').forEach(b=>{
     applyLang();
   };
 });
-$('#prevM').onclick=()=>{ viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar(); };
-$('#nextM').onclick=()=>{ viewMonth.setMonth(viewMonth.getMonth()+1); renderCalendar(); };
+$('#prevM').onclick=()=>{ if(checkIn && !checkOut){ checkIn=null; renderSummary(); } viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar(); };
+$('#nextM').onclick=()=>{ if(checkIn && !checkOut){ checkIn=null; renderSummary(); } viewMonth.setMonth(viewMonth.getMonth()+1); renderCalendar(); };
 $('#bookBtn').onclick=submitBooking;
 
 // ---------- Toast ----------
@@ -692,9 +792,41 @@ $('#admin-logout').onclick=()=>{ adminPass=null; $('#admin-pass').value=''; $('#
 $('#admin-tab-bookings').onclick=()=>adminTab('bookings');
 $('#admin-tab-cms').onclick=()=>adminTab('cms');
 $('#admin-tab-airbnb').onclick=()=>adminTab('airbnb');
+$('#admin-tab-tips').onclick=()=>adminTab('tips');
 function adminTab(which){
-  ['bookings','cms','airbnb'].forEach(x=>$('#admin-'+x).style.display = x===which?'block':'none');
+  ['bookings','cms','airbnb','tips'].forEach(x=>$('#admin-'+x).style.display = x===which?'block':'none');
+  if(which==='tips') adminLoadTips();
 }
+async function adminLoadTips(){
+  const host=$('#admin-tips');
+  try{
+    const list=await api('/api/admin/tips',{ headers:{'x-admin-password':adminPass} });
+    if(!list.length){ host.innerHTML='<div class="empty-sum">Ingen tips ennå.</div>'; return; }
+    const catName={food:'🍽️ Spisested',visit:'📍 Sted',activity:'🏄 Aktivitet',other:'💡 Annet'};
+    host.innerHTML=list.map(t=>{
+      const stTxt = t.status==='published'?'Publisert':(t.status==='pending'?'Avventer bekreftelse':'Skjult');
+      const stCls = t.status==='published'?'st-confirmed':(t.status==='pending'?'st-pending':'st-airbnb');
+      return `<div class="bk">
+        <div style="flex:1;">
+          <div class="bk-room">${escapeH(t.title)} <span style="font-weight:400;color:var(--muted);font-size:13px;">· ${catName[t.category]||''}</span></div>
+          <div class="bk-meta">${escapeH(t.body).slice(0,140)}${t.body.length>140?'…':''}</div>
+          <div class="bk-meta" style="margin-top:3px;">${escapeH(t.name)} · ${escapeH(t.email)}</div>
+          <button type="button" class="bk-del" data-tipdel="${t.id}" style="margin-top:6px;">Slett</button>
+        </div>
+        <span class="bk-status ${stCls}">${stTxt}</span>
+      </div>`;
+    }).join('');
+  }catch(e){ host.innerHTML='<div class="empty-sum">Kunne ikke laste tips.</div>'; }
+}
+$('#admin-tips').addEventListener('click', async (ev)=>{
+  const btn=ev.target.closest('[data-tipdel]'); if(!btn) return;
+  if(!confirm('Slette dette tipset permanent?')) return;
+  btn.disabled=true; btn.textContent='Sletter …';
+  try{
+    await api('/api/admin/tips/'+encodeURIComponent(btn.dataset.tipdel),{ method:'DELETE', headers:{'x-admin-password':adminPass} });
+    toast('Tipset er slettet.'); adminLoadTips();
+  }catch(e){ toast(e.message||'Kunne ikke slette.'); btn.disabled=false; btn.textContent='Slett'; }
+});
 function bookingFormHtml(prefix, b){
   b = b || {};
   return `
