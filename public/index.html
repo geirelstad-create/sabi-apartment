@@ -140,6 +140,12 @@
   .gallery figure{ margin:0; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); background:var(--card); }
   .gallery img{ width:100%; height:200px; object-fit:cover; display:block; }
   .gallery figcaption{ font-size:13px; color:var(--muted); padding:9px 12px; }
+  .gallery figure{ cursor:zoom-in; }
+  #lys{ position:fixed; inset:0; z-index:2000; background:rgba(10,14,30,.92); display:none; align-items:center; justify-content:center; padding:24px; cursor:zoom-out; }
+  #lys.apen{ display:flex; }
+  #lys img{ max-width:100%; max-height:calc(100vh - 90px); border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.5); background:#000; }
+  #lys figcaption{ position:absolute; left:0; right:0; bottom:18px; text-align:center; color:#fff; font-size:15px; }
+  #lys .lukk{ position:absolute; top:14px; right:18px; color:#fff; font-size:34px; line-height:1; background:none; border:0; cursor:pointer; }
 
   /* Info */
   .info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
@@ -1104,5 +1110,17 @@ async function init(){
 init();
 </script>
 
+<div id="lys" role="dialog" aria-modal="true"><button class="lukk" aria-label="Lukk">&times;</button><img alt=""><figcaption></figcaption></div>
+<script>
+(function(){
+  const lys=document.getElementById('lys'), bilde=lys.querySelector('img'), tekst=lys.querySelector('figcaption');
+  document.querySelectorAll('.gallery figure').forEach(f=>f.addEventListener('click',()=>{
+    bilde.src=f.querySelector('img').src; tekst.textContent=f.querySelector('figcaption').textContent; lys.classList.add('apen');
+  }));
+  function lukk(){ lys.classList.remove('apen'); bilde.src=''; }
+  lys.addEventListener('click',lukk);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') lukk(); });
+})();
+</script>
 </body>
 </html>
