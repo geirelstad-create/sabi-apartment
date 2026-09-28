@@ -113,6 +113,13 @@
   /* half-pm = nedre høyre trekant fylt (ettermiddag opptatt, f.eks. check-inn-dag) */
   .day.half-pm::before{ clip-path:polygon(100% 0, 100% 100%, 0 100%); }
   .day.half .halfday-num{ position:relative; z-index:1; }
+  /* Liten merkelapp med flagg+initialer i den fylte trekanten på halvdager */
+  .day .halftag{ position:absolute; z-index:2; display:flex; align-items:center; gap:1px; font-size:7.5px; font-weight:700; line-height:1; color:#41506b; white-space:nowrap; pointer-events:none; }
+  .day .halftag svg{ width:11px; height:8px; display:block; }
+  /* half-am: merkelapp øverst til venstre (i den fylte trekanten) */
+  .day .halftag.am{ top:2px; left:2px; }
+  /* half-pm: merkelapp nederst til høyre */
+  .day .halftag.pm{ bottom:2px; right:2px; }
   .day.sel{ background:var(--navy); color:#fff; border-color:var(--navy); }
   .day.inrange{ background:var(--cyan); color:#fff; }
   .day.start,.day.end{ background:var(--navy); color:#fff; }
@@ -651,8 +658,26 @@ function buildMonth(m){
         num.className='halfday-num'; num.textContent=d;
         cell.appendChild(num);
         const parts=[];
-        if(ends) parts.push('opptatt til ca. kl. 10');
-        if(starts) parts.push('opptatt fra ettermiddagen');
+        // Liten merkelapp (flagg + initialer) i den fylte trekanten, som viser hvem halvdagen tilhører.
+        // Airbnb-bookinger har ingen initialer/land -> vises uten merkelapp (bare skravur).
+        const cornerTag = (bk, cls) => {
+          if(!bk || bk.source==='airbnb') return;
+          const flag = countryFlagSVG(bk.country) || '';
+          const ini = bk.initials || '';
+          if(!flag && !ini) return;
+          const tag=document.createElement('span');
+          tag.className='halftag '+cls;
+          tag.innerHTML = flag + (ini?'<span>'+ini+'</span>':'');
+          cell.appendChild(tag);
+        };
+        if(ends){
+          cornerTag(ends, 'am');
+          parts.push((ends.initials?ends.initials+' ':'')+'reiser ca. kl. 10');
+        }
+        if(starts){
+          cornerTag(starts, 'pm');
+          parts.push((starts.initials?starts.initials+' ':'')+'ankommer ettermiddag');
+        }
         cell.title = parts.join(' · ');
       }
       cell.addEventListener('click',()=>pickDate(cur));
