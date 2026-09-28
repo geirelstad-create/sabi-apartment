@@ -116,6 +116,7 @@
   /* Liten merkelapp med flagg+initialer i den fylte trekanten på halvdager */
   .day .halftag{ position:absolute; z-index:2; display:flex; align-items:center; gap:1px; font-size:7.5px; font-weight:700; line-height:1; color:#41506b; white-space:nowrap; pointer-events:none; }
   .day .halftag svg{ width:11px; height:8px; display:block; }
+  .day .halftag.ab svg{ width:9px; height:9px; }
   /* half-am: merkelapp øverst til venstre (i den fylte trekanten) */
   .day .halftag.am{ top:2px; left:2px; }
   /* half-pm: merkelapp nederst til høyre */
@@ -658,25 +659,31 @@ function buildMonth(m){
         num.className='halfday-num'; num.textContent=d;
         cell.appendChild(num);
         const parts=[];
-        // Liten merkelapp (flagg + initialer) i den fylte trekanten, som viser hvem halvdagen tilhører.
-        // Airbnb-bookinger har ingen initialer/land -> vises uten merkelapp (bare skravur).
+        // Liten merkelapp i den fylte trekanten som viser hvem halvdagen tilhører.
+        // Intern booking -> flagg + initialer. Airbnb -> lite husikon (samme som fulle Airbnb-dager).
+        const houseSVG = "<svg viewBox='0 0 24 24' fill='#ff5a5f' xmlns='http://www.w3.org/2000/svg' style='width:9px;height:9px;'><path d='M12 3 2 11h2v9h6v-6h4v6h6v-9h2z'/></svg>";
         const cornerTag = (bk, cls) => {
-          if(!bk || bk.source==='airbnb') return;
-          const flag = countryFlagSVG(bk.country) || '';
-          const ini = bk.initials || '';
-          if(!flag && !ini) return;
+          if(!bk) return;
           const tag=document.createElement('span');
           tag.className='halftag '+cls;
-          tag.innerHTML = flag + (ini?'<span>'+ini+'</span>':'');
+          if(bk.source==='airbnb'){
+            tag.innerHTML = houseSVG;
+            tag.classList.add('ab');
+          } else {
+            const flag = countryFlagSVG(bk.country) || '';
+            const ini = bk.initials || '';
+            if(!flag && !ini){ return; }
+            tag.innerHTML = flag + (ini?'<span>'+ini+'</span>':'');
+          }
           cell.appendChild(tag);
         };
         if(ends){
           cornerTag(ends, 'am');
-          parts.push((ends.initials?ends.initials+' ':'')+'reiser ca. kl. 10');
+          parts.push((ends.source==='airbnb'?'Airbnb':(ends.initials||'Gjest'))+' reiser ca. kl. 10');
         }
         if(starts){
           cornerTag(starts, 'pm');
-          parts.push((starts.initials?starts.initials+' ':'')+'ankommer ettermiddag');
+          parts.push((starts.source==='airbnb'?'Airbnb':(starts.initials||'Gjest'))+' ankommer ettermiddag');
         }
         cell.title = parts.join(' · ');
       }
