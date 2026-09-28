@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nextron Duquesa Apartment</title>
+<meta name="description" content="Bedriftsintern booking av Nextrons ferieleilighet i Marina de la Duquesa, Costa del Sol.">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231b2a5e'/%3E%3Ctext x='50' y='70' font-family='Arial' font-size='62' font-weight='bold' text-anchor='middle' fill='%234db4e7'%3ED%3C/text%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Outfit:wght@300;400;500;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root{
+    --navy:#1b2a5e;        /* Nextron dark navy */
+    --navy-2:#24356f;
+    --cyan:#4db4e7;        /* Nextron light blue */
+    --cyan-deep:#2f9fd8;
+    --ink:#16213e;
+    --paper:#f7f6f2;       /* warm sand white */
+    --paper-2:#eceae3;
+    --card:#ffffff;
+    --line:#e0ddd3;
+    --muted:#6b7280;
+    --sea:#2f9fd8;
+    --blocked:#c9ccd6;
+    --ok:#1b9e6a;
+    --warn:#d9822b;
+    --radius:16px;
+    --shadow:0 10px 40px rgba(27,42,94,.10);
+  }
+  html{ scroll-behavior:smooth; }
+  body{ font-family:'Outfit',sans-serif; background:var(--paper); color:var(--ink); line-height:1.55; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 22px; }
+  a{ color:var(--cyan-deep); }
+
+  /* Header */
+  header{ position:sticky; top:0; z-index:50; background:rgba(247,246,242,.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 0; }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand img{ height:30px; width:auto; display:block; }
+  .brand .sub{ font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); border-left:1px solid var(--line); padding-left:12px; }
+  .topnav{ display:flex; align-items:center; gap:8px; }
+  .navlink{ font:inherit; font-size:14px; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:8px 16px; border-radius:100px; transition:.15s; font-weight:500; }
+  .navlink:hover{ border-color:var(--cyan); }
+  .navlink.active{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .lang{ display:flex; gap:4px; margin-left:6px; }
+  .lang button{ font:inherit; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--muted); padding:7px 11px; border-radius:9px; transition:.15s; }
+  .lang button.active{ background:var(--cyan); color:#fff; border-color:var(--cyan); }
+  @media(max-width:600px){
+    .topbar{ flex-wrap:wrap; gap:10px; }
+    .brand .sub{ display:none; }
+    .navlink{ padding:7px 12px; font-size:13px; }
+  }
+
+  /* Hero */
+  .hero{ position:relative; }
+  .hero-grid{ display:grid; grid-template-columns:1.05fr 1fr; gap:38px; align-items:center; padding:54px 0 40px; }
+  @media(max-width:880px){ .hero-grid{ grid-template-columns:1fr; gap:26px; padding:34px 0 26px; } }
+  .eyebrow{ font-size:13px; letter-spacing:3px; text-transform:uppercase; color:var(--cyan-deep); font-weight:600; }
+  .hero h1{ font-family:'Fraunces',serif; font-weight:600; font-size:clamp(34px,5.4vw,60px); line-height:1.02; margin:14px 0 0; color:var(--navy); letter-spacing:-.5px; }
+  .hero h1 em{ font-style:italic; color:var(--cyan-deep); }
+  .hero p.lead{ margin-top:18px; font-size:17px; color:#41506b; max-width:48ch; }
+  .hero-photo{ position:relative; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+  .hero-photo img{ width:100%; height:100%; object-fit:cover; display:block; aspect-ratio:3/2; }
+  .hero-photo .cap{ position:absolute; left:14px; bottom:14px; background:rgba(27,42,94,.82); color:#fff; font-size:13px; padding:7px 13px; border-radius:9px; }
+  .facts{ display:flex; flex-wrap:wrap; gap:10px; margin-top:22px; }
+  .fact{ display:flex; align-items:center; gap:7px; font-size:14px; background:var(--card); border:1px solid var(--line); border-radius:100px; padding:7px 14px; color:#41506b; }
+  .fact b{ color:var(--navy); font-weight:600; }
+
+  /* Section scaffolding */
+  section{ padding:30px 0; }
+  .sec-title{ font-family:'Fraunces',serif; font-weight:600; font-size:28px; color:var(--navy); margin-bottom:6px; }
+  .sec-sub{ color:var(--muted); margin-bottom:22px; }
+
+  /* Views */
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* Booking layout */
+  .book-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:26px; align-items:start; }
+  @media(max-width:900px){ .book-grid{ grid-template-columns:1fr; } }
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow); }
+
+  /* Calendar */
+  .cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .cal-nav{ display:flex; gap:8px; }
+  .cal-nav button{ width:38px; height:38px; border-radius:10px; border:1px solid var(--line); background:var(--paper); cursor:pointer; font-size:18px; color:var(--navy); transition:.15s; }
+  .cal-nav button:hover{ border-color:var(--cyan); background:#fff; }
+  .cal-nav button:disabled{ opacity:.35; cursor:not-allowed; }
+  .months{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  @media(max-width:620px){ .months{ grid-template-columns:1fr; } }
+  .month h3{ font-family:'Fraunces',serif; font-weight:600; text-align:center; color:var(--navy); margin-bottom:10px; font-size:17px; text-transform:capitalize; }
+  .dow{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:5px; }
+  .dow span{ text-align:center; font-size:11px; font-weight:600; letter-spacing:.5px; color:var(--muted); text-transform:uppercase; }
+  .grid7{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .day{ aspect-ratio:1; display:flex; align-items:center; justify-content:center; font-size:13.5px; border-radius:9px; cursor:pointer; border:1px solid transparent; background:var(--paper); transition:.1s; position:relative; user-select:none; }
+  .day:hover:not(.disabled):not(.blocked){ border-color:var(--cyan); }
+  .day.empty{ background:transparent; cursor:default; }
+  .day.disabled{ color:#c2c2c2; cursor:not-allowed; background:transparent; }
+  .day.blocked{ background:repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 4px,#dcd8cf 4px,#dcd8cf 8px); color:#9a958c; cursor:not-allowed; }
+  .day.blocked.airbnb::after{ content:''; position:absolute; top:2px; right:3px; width:11px; height:11px; background-repeat:no-repeat; background-position:center; background-size:contain; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff5a5f'%3E%3Cpath d='M12 3 2 11h2v9h6v-6h4v6h6v-9h2z'/%3E%3C/svg%3E"); }
+  .day .daytag{ position:absolute; bottom:1px; left:0; right:0; display:flex; align-items:center; justify-content:center; gap:1px; font-size:8.5px; font-weight:700; line-height:1; color:#41506b; letter-spacing:.2px; white-space:nowrap; overflow:hidden; }
+  .day .daytag-ini{ font-size:8.5px; font-weight:700; }
+  .day.blocked{ position:relative; }
+  /* Halvdag: check-ut-morgen (opptatt til ~10) og check-inn-ettermiddag (opptatt fra ~15).
+     Dagen er fortsatt klikkbar/ledig for den andre halvdelen. */
+  .day.half{ position:relative; }
+  .day.half::before{ content:''; position:absolute; inset:0; border-radius:9px; pointer-events:none;
+    background:repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 4px,#dcd8cf 4px,#dcd8cf 8px); }
+  /* half-am = øvre venstre trekant fylt (morgen opptatt, f.eks. check-ut-dag) */
+  .day.half-am::before{ clip-path:polygon(0 0, 100% 0, 0 100%); }
+  /* half-pm = nedre høyre trekant fylt (ettermiddag opptatt, f.eks. check-inn-dag) */
+  .day.half-pm::before{ clip-path:polygon(100% 0, 100% 100%, 0 100%); }
+  .day.half .halfday-num{ position:relative; z-index:1; }
+  .day.sel{ background:var(--navy); color:#fff; border-color:var(--navy); }
+  .day.inrange{ background:var(--cyan); color:#fff; }
+  .day.start,.day.end{ background:var(--navy); color:#fff; }
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin-top:16px; font-size:12.5px; color:var(--muted); }
+  .legend i{ width:13px; height:13px; border-radius:4px; display:inline-block; margin-right:5px; vertical-align:-2px; }
+  .lg-sel{ background:var(--navy); } .lg-range{ background:var(--cyan); }
+  .lg-block{ background:repeating-linear-gradient(45deg,#e7e3dc,#e7e3dc 3px,#dcd8cf 3px,#dcd8cf 6px); }
+
+  /* Summary / form */
+  .sum-line{ display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:14.5px; }
+  .sum-line:last-of-type{ border-bottom:none; }
+  .sum-line b{ color:var(--navy); }
+  .empty-sum{ text-align:center; color:var(--muted); padding:18px 0; }
+  .tip-card{ background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px 18px; margin-bottom:12px; max-width:600px; }
+  .tip-cat{ font-size:12px; font-weight:600; color:var(--cyan-deep); margin-bottom:4px; }
+  .tip-title{ font-family:'Fraunces',serif; font-size:18px; font-weight:600; color:var(--navy); margin-bottom:6px; }
+  .tip-body{ font-size:14.5px; color:#3a3a3a; line-height:1.5; }
+  .tip-body a{ color:var(--cyan-deep); font-weight:600; white-space:nowrap; }
+  .tip-by{ font-size:13px; color:var(--muted); margin-top:8px; font-style:italic; }
+  .field{ margin-top:14px; }
+  .field label{ display:block; font-size:13px; font-weight:600; color:var(--navy); margin-bottom:5px; }
+  .field input, .field textarea{ width:100%; font:inherit; font-size:15px; padding:11px 13px; border:1px solid var(--line); border-radius:10px; background:var(--paper); color:var(--ink); }
+  .field input:focus, .field textarea:focus{ outline:none; border-color:var(--cyan); background:#fff; }
+  .hint{ font-size:12px; color:var(--muted); margin-top:5px; }
+  .btn{ width:100%; margin-top:18px; padding:14px; border:none; border-radius:12px; background:var(--navy); color:#fff; font-family:'Outfit'; font-weight:600; font-size:15px; cursor:pointer; transition:.16s; letter-spacing:.2px; }
+  .btn:hover:not(:disabled){ background:var(--navy-2); }
+  .btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .note{ font-size:12.5px; color:var(--muted); margin-top:12px; display:flex; gap:8px; align-items:flex-start; }
+  .note svg{ flex-shrink:0; margin-top:2px; }
+
+  /* Gallery */
+  .gallery{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media(max-width:760px){ .gallery{ grid-template-columns:1fr 1fr; } }
+  @media(max-width:480px){ .gallery{ grid-template-columns:1fr; } }
+  .gallery figure{ margin:0; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); background:var(--card); }
+  .gallery img{ width:100%; height:200px; object-fit:cover; display:block; }
+  .gallery figcaption{ font-size:13px; color:var(--muted); padding:9px 12px; }
+  .gallery figure{ cursor:zoom-in; }
+  #lys{ position:fixed; inset:0; z-index:2000; background:rgba(10,14,30,.92); display:none; align-items:center; justify-content:center; padding:24px; cursor:zoom-out; }
+  #lys.apen{ display:flex; }
+  #lys img{ max-width:100%; max-height:calc(100vh - 90px); border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.5); background:#000; }
+  #lys figcaption{ position:absolute; left:0; right:0; bottom:18px; text-align:center; color:#fff; font-size:15px; }
+  #lys .lukk{ position:absolute; top:14px; right:18px; color:#fff; font-size:34px; line-height:1; background:none; border:0; cursor:pointer; }
+
+  /* Info */
+  .info-grid{ display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  @media(max-width:820px){ .info-grid{ grid-template-columns:1fr; } }
+  .info-card{ background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:22px 24px; box-shadow:var(--shadow); }
+  .info-card h3{ font-family:'Fraunces',serif; font-weight:600; color:var(--navy); font-size:19px; margin-bottom:10px; display:flex; align-items:center; gap:9px; }
+  .info-card .ic{ width:30px; height:30px; border-radius:8px; background:var(--cyan); color:#fff; display:grid; place-items:center; flex-shrink:0; }
+  .info-card p{ font-size:14.5px; color:#41506b; margin:7px 0; }
+  .info-card ul{ margin:7px 0 7px 2px; padding:0; list-style:none; }
+  .info-card li{ font-size:14.5px; color:#41506b; padding:5px 0 5px 20px; position:relative; }
+  .info-card li::before{ content:''; position:absolute; left:0; top:12px; width:7px; height:7px; border-radius:50%; background:var(--cyan); }
+  .info-card.span2{ grid-column:1/-1; }
+
+  /* Toast */
+  #toast{ position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(120px); background:var(--navy); color:#fff; padding:14px 22px; border-radius:12px; font-size:14.5px; box-shadow:0 12px 40px rgba(0,0,0,.25); opacity:0; transition:.3s; z-index:100; max-width:90vw; text-align:center; }
+  #toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
+
+  footer{ border-top:1px solid var(--line); padding:28px 0; font-size:13px; color:var(--muted); text-align:center; margin-top:20px; }
+
+  /* Tilgangsport */
+  #gate{ position:fixed; inset:0; z-index:1000; background:linear-gradient(160deg,#1b2a5e,#24356f); display:grid; place-items:center; padding:20px; }
+  .gate-card{ background:#fff; border-radius:20px; padding:40px 34px; max-width:420px; width:100%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.3); }
+  .gate-logo{ height:34px; margin-bottom:22px; }
+  .gate-card h1{ font-family:'Fraunces',serif; font-weight:600; color:var(--navy); font-size:26px; margin-bottom:10px; }
+  .gate-card p{ color:#41506b; font-size:15px; margin-bottom:20px; }
+  .gate-card input{ width:100%; font:inherit; font-size:15px; padding:13px 15px; border:1px solid var(--line); border-radius:11px; background:var(--paper); margin-bottom:12px; }
+  .gate-card input:focus{ outline:none; border-color:var(--cyan); background:#fff; }
+  .gate-card button#gate-btn{ width:100%; padding:14px; border:none; border-radius:12px; background:var(--navy); color:#fff; font-family:'Outfit'; font-weight:600; font-size:15px; cursor:pointer; }
+  .gate-card button#gate-btn:hover{ background:var(--navy-2); }
+  .gate-lang{ display:flex; gap:6px; justify-content:center; margin-top:22px; }
+  .gate-lang button{ font:inherit; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--muted); padding:6px 12px; border-radius:8px; }
+  .gate-lang button.active{ background:var(--cyan); color:#fff; border-color:var(--cyan); }
+
+  .bk{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:13px 0; border-bottom:1px solid var(--line); }
+  .bk-room{ font-weight:600; color:var(--navy); }
+  .bk-meta{ font-size:13px; color:var(--muted); }
+  .bk-del{ font:inherit; font-size:12.5px; color:#c0392b; background:none; border:1px solid #e6c5c0; padding:5px 10px; border-radius:8px; cursor:pointer; margin-top:6px; }
+  .bk-status{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; padding:4px 9px; border-radius:100px; }
+  .st-confirmed{ background:#e3f5ec; color:var(--ok); }
+  .st-pending{ background:#fdf0e1; color:var(--warn); }
+  .st-airbnb{ background:#ffe8e9; color:#ff5a5f; }
+</style>
+</head>
+<body>
+
+<div id="gate" style="display:none;">
+  <div class="gate-card">
+    <img src="/bilder/logo.png" alt="Quad" class="gate-logo">
+    <h1 id="gate-title">Tilgang</h1>
+    <p id="gate-text">Skriv inn e-posten din, så sender vi deg en lenke for å få tilgang til bookingsiden.</p>
+    <div id="gate-form">
+      <input id="gate-email" type="email" placeholder="navn@nextron.no" autocomplete="email">
+      <button id="gate-btn">Send tilgangslenke</button>
+    </div>
+    <p id="gate-sent" style="display:none;color:var(--cyan-deep);font-weight:600;"></p>
+    <div class="gate-lang">
+      <button data-glang="no" class="active">NO</button>
+      <button data-glang="en">EN</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="wrap topbar">
+    <div class="brand">
+      <img src="/bilder/logo.png" alt="Quad">
+      <span class="sub">Duquesa Apartment</span>
+    </div>
+    <div class="topnav">
+      <button class="navlink active" data-view="book" data-i="nav_book">Book</button>
+      <button class="navlink" data-view="info" data-i="nav_info">Info</button>
+      <button class="navlink" data-view="gallery" data-i="nav_gallery">Bilder</button>
+      <button class="navlink" data-view="tips" data-i="nav_tips">Tips</button>
+      <div class="lang">
+        <button data-lang="no" class="active">NO</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== BOOK VIEW ===== -->
+<div class="view active" id="view-book">
+  <div class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow" data-i="hero_eyebrow">Bedriftsintern ferieleilighet</div>
+        <h1 data-i="hero_title">Nextron <em>Duquesa</em> Apartment</h1>
+        <p class="lead" data-i="hero_lead">Book Nextrons ferieleilighet i Marina de la Duquesa på Costa del Sol – gratis for ansatte. To soverom, havutsikt og stranden rett utenfor.</p>
+        <div class="facts">
+          <div class="fact"><b>90 m²</b> <span data-i="fact_size">leilighet</span></div>
+          <div class="fact"><b>6</b> <span data-i="fact_beds">sengeplasser</span></div>
+          <div class="fact"><b>2</b> <span data-i="fact_bedrooms">soverom</span></div>
+          <div class="fact">🏖 <span data-i="fact_beach">Blue flag-strand</span></div>
+        </div>
+      </div>
+      <div class="hero-photo">
+        <img src="/bilder/hero.jpg" alt="Marina de la Duquesa">
+        <span class="cap">Marina de la Duquesa · Costa del Sol</span>
+      </div>
+    </div>
+  </div>
+
+  <section class="wrap">
+    <div class="book-grid">
+      <div class="panel">
+        <div class="cal-head">
+          <div>
+            <div class="sec-title" style="font-size:22px;" data-i="cal_title">Velg datoer</div>
+            <div class="sec-sub" style="margin:0;" data-i="cal_sub">4–14 netter. Trykk innsjekk, så utsjekk.</div>
+          </div>
+          <div class="cal-nav">
+            <button id="prevM">‹</button>
+            <button id="nextM">›</button>
+          </div>
+        </div>
+        <div class="months" id="months"></div>
+        <div class="legend">
+          <span><i class="lg-sel"></i><span data-i="lg_selected">Valgt</span></span>
+          <span><i class="lg-range"></i><span data-i="lg_range">Opphold</span></span>
+          <span><i class="lg-block"></i><span data-i="lg_blocked">Opptatt</span></span>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="sec-title" style="font-size:20px;" data-i="sum_title">Din booking</div>
+          <div id="sum-body" style="margin-top:12px;">
+            <div class="empty-sum" data-i="sum_empty">Velg innsjekk- og utsjekkdato i kalenderen.</div>
+          </div>
+          <div id="book-form" style="display:none;">
+            <div class="field">
+              <label data-i="f_name">Navn</label>
+              <input id="f-name" placeholder="Ola Nordmann">
+            </div>
+            <div class="field">
+              <label data-i="f_email">Nextron e-post</label>
+              <input id="f-email" type="email" placeholder="navn@nextron.no">
+              <div class="hint" data-i="f_email_hint">Kun @nextron.no/.se/.dk/.fi kan booke.</div>
+            </div>
+            <div class="field">
+              <label data-i="f_guests">Antall gjester</label>
+              <input id="f-guests" type="number" min="1" max="6" value="2">
+            </div>
+            <div class="field">
+              <label data-i="f_msg">Melding (valgfritt)</label>
+              <textarea id="f-msg" rows="2"></textarea>
+            </div>
+            <button class="btn" id="bookBtn" data-i="f_submit">Send bookingforespørsel</button>
+            <div class="note">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <span data-i="f_note">Du får en e-post med en bekreftelseslenke. Bookingen er ikke gyldig før du har bekreftet.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== INFO VIEW ===== -->
+<div class="view" id="view-info">
+  <section class="wrap">
+    <div class="sec-title" data-i="info_title">Praktisk informasjon</div>
+    <div class="sec-sub" data-i="info_sub">Alt du trenger å vite om leiligheten og området.</div>
+    <div class="info-grid" id="info-grid"></div>
+  </section>
+</div>
+
+<!-- ===== GALLERY VIEW ===== -->
+<div class="view" id="view-gallery">
+  <section class="wrap">
+    <div class="sec-title" data-i="gal_title">Bilder</div>
+    <div class="sec-sub" data-i="gal_sub">Fra leiligheten og området.</div>
+    <div class="gallery">
+      <figure><img src="/bilder/view.jpg" alt="" loading="lazy"><figcaption data-i="cap_view"></figcaption></figure>
+      <figure><img src="/bilder/balcony.jpg" alt="" loading="lazy"><figcaption data-i="cap_balcony"></figcaption></figure>
+      <figure><img src="/bilder/living_old.jpg" alt="" loading="lazy"><figcaption data-i="cap_living_old"></figcaption></figure>
+      <figure><img src="/bilder/living.jpg" alt="" loading="lazy"><figcaption data-i="cap_living"></figcaption></figure>
+      <figure><img src="/bilder/kitchen.jpg" alt="" loading="lazy"><figcaption data-i="cap_kitchen"></figcaption></figure>
+      <figure><img src="/bilder/bed1.jpg" alt="" loading="lazy"><figcaption data-i="cap_bed1"></figcaption></figure>
+      <figure><img src="/bilder/bed2.jpg" alt="" loading="lazy"><figcaption data-i="cap_bed2"></figcaption></figure>
+      <figure><img src="/bilder/bedroom.jpg" alt="" loading="lazy"><figcaption data-i="cap_bedroom"></figcaption></figure>
+      <figure><img src="/bilder/beach_marina.jpg" alt="" loading="lazy"><figcaption data-i="cap_beach_marina"></figcaption></figure>
+      <figure><img src="/bilder/beach_sabinillas.jpg" alt="" loading="lazy"><figcaption data-i="cap_beach_sabinillas"></figcaption></figure>
+      <figure><img src="/bilder/beach_bar.jpg" alt="" loading="lazy"><figcaption data-i="cap_beach_bar"></figcaption></figure>
+      <figure><img src="/bilder/beach_club.jpg" alt="" loading="lazy"><figcaption data-i="cap_beach_club"></figcaption></figure>
+      <figure><img src="/bilder/espetos.jpg" alt="" loading="lazy"><figcaption data-i="cap_espetos"></figcaption></figure>
+      <figure><img src="/bilder/promenade.jpg" alt="" loading="lazy"><figcaption data-i="cap_promenade"></figcaption></figure>
+      <figure><img src="/bilder/plaza.jpg" alt="" loading="lazy"><figcaption data-i="cap_plaza"></figcaption></figure>
+      <figure><img src="/bilder/marina.jpg" alt="" loading="lazy"><figcaption data-i="cap_marina"></figcaption></figure>
+      <figure><img src="/bilder/harbour_walk.jpg" alt="" loading="lazy"><figcaption data-i="cap_harbour_walk"></figcaption></figure>
+      <figure><img src="/bilder/padel.jpg" alt="" loading="lazy"><figcaption data-i="cap_padel"></figcaption></figure>
+    </div>
+  </section>
+</div>
+
+<!-- ===== TIPS VIEW ===== -->
+<div class="view" id="view-tips">
+  <section class="wrap">
+    <div class="sec-title" data-i="tips_title">Gjestetips</div>
+    <div class="sec-sub" data-i="tips_sub">Anbefalinger fra Nextron-kolleger – spisesteder, steder å besøke og ting å gjøre.</div>
+    <button class="navlink" id="tips-new-btn" style="margin-bottom:16px;" data-i="tips_add">+ Del et tips</button>
+    <div id="tips-form" style="display:none;border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;max-width:600px;">
+      <div class="field"><label data-i="tips_cat">Kategori</label>
+        <select id="tips-cat" style="width:100%;font:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--paper);">
+          <option value="food">🍽️ Spisested</option>
+          <option value="visit">📍 Sted å besøke</option>
+          <option value="activity">🏄 Ting å gjøre</option>
+          <option value="other">💡 Annet</option>
+        </select>
+      </div>
+      <div class="field"><label data-i="tips_ttl">Tittel</label><input id="tips-title" maxlength="120" placeholder="F.eks. Restaurante La Marina"></div>
+      <div class="field"><label data-i="tips_body">Beskrivelse</label><textarea id="tips-body" rows="3" maxlength="2000" placeholder="Hva vil du anbefale, og hvorfor?"></textarea></div>
+      <div class="field"><label data-i="tips_url">Lenke (valgfritt)</label><input id="tips-url" placeholder="https://…"></div>
+      <div style="display:flex;gap:10px;">
+        <div class="field" style="flex:1;"><label data-i="tips_name">Navn</label><input id="tips-name" maxlength="80" placeholder="Ditt navn"></div>
+        <div class="field" style="flex:1;"><label data-i="tips_email">E-post</label><input id="tips-email" type="email" placeholder="navn@nextron.no"></div>
+      </div>
+      <button class="btn" id="tips-submit" data-i="tips_submit">Send inn tips</button>
+      <div class="hint" style="margin-top:8px;" data-i="tips_hint">Du får en e-post med en bekreftelseslenke. Tipset vises etter at du har bekreftet.</div>
+    </div>
+    <div id="tips-list"></div>
+  </section>
+</div>
+
+<div class="view" id="view-admin">
+  <section class="wrap">
+    <div class="sec-title">Administrasjon</div>
+    <div class="panel" style="max-width:560px;">
+      <div id="admin-login">
+        <div class="field"><label>Admin-passord</label><input id="admin-pass" type="password" placeholder="••••••••"></div>
+        <button class="btn" id="admin-login-btn">Logg inn</button>
+      </div>
+      <div id="admin-content" style="display:none;">
+        <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+          <button class="navlink" id="admin-tab-bookings">Bookinger</button>
+          <button class="navlink" id="admin-tab-cms">Tekst &amp; lenker</button>
+          <button class="navlink" id="admin-tab-airbnb">Airbnb-synk</button>
+          <button class="navlink" id="admin-tab-tips">Tips</button>
+        </div>
+        <div id="admin-bookings"><div class="empty-sum">Laster …</div></div>
+        <div id="admin-cms" style="display:none;"></div>
+        <div id="admin-airbnb" style="display:none;"></div>
+        <div id="admin-tips" style="display:none;"></div>
+        <button class="bk-del" id="admin-logout" style="margin-top:16px;">Logg ut</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="toast"></div>
+<footer class="wrap">
+  Nextron AS · Duquesa Apartment · <span data-i="footer_tag">Bedriftsintern booking</span>
+</footer>
+
+
+<script>
+// ---------- i18n ----------
+const I18N = {
+  no:{
+    nav_book:"Book", nav_info:"Info", nav_gallery:"Bilder", nav_tips:"Tips",
+    tips_title:"Gjestetips", tips_sub:"Anbefalinger fra Nextron-kolleger – spisesteder, steder å besøke og ting å gjøre.",
+    tips_add:"+ Del et tips", tips_cat:"Kategori", tips_ttl:"Tittel", tips_body:"Beskrivelse", tips_url:"Lenke (valgfritt)",
+    tips_name:"Navn", tips_email:"E-post", tips_submit:"Send inn tips",
+    tips_hint:"Du får en e-post med en bekreftelseslenke. Tipset vises etter at du har bekreftet.",
+    hero_eyebrow:"Bedriftsintern ferieleilighet",
+    hero_lead:"Book Nextrons ferieleilighet i Marina de la Duquesa på Costa del Sol – gratis for ansatte. To soverom, havutsikt og stranden rett utenfor.",
+    fact_size:"leilighet", fact_beds:"sengeplasser", fact_bedrooms:"soverom", fact_beach:"Blue flag-strand",
+    cal_title:"Velg datoer", cal_sub:"4–14 netter. Trykk innsjekk, så utsjekk.",
+    lg_selected:"Valgt", lg_range:"Opphold", lg_blocked:"Opptatt",
+    sum_title:"Din booking", sum_empty:"Velg innsjekk- og utsjekkdato i kalenderen.",
+    f_name:"Navn", f_email:"Nextron e-post", f_email_hint:"Kun @nextron.no/.se/.dk/.fi kan booke.",
+    f_guests:"Antall gjester", f_msg:"Melding (valgfritt)", f_submit:"Send bookingforespørsel",
+    f_note:"Du får en e-post med en bekreftelseslenke. Bookingen er ikke gyldig før du har bekreftet.",
+    info_title:"Praktisk informasjon", info_sub:"Alt du trenger å vite om leiligheten og området.",
+    gal_title:"Bilder", gal_sub:"Fra leiligheten og området.",
+    cap_view:"Utsikt og basseng", cap_balcony:"Balkong med havutsikt",
+    cap_living_old:"Stue", cap_living:"Stue med spiseplass", cap_kitchen:"Kjøkken med vaskerom", cap_bed1:"Soverom 1", cap_bed2:"Soverom 2", cap_bedroom:"Soverom 2, sett fra døren", cap_beach_marina:"Stranden nedenfor leiligheten, mot marinaen", cap_beach_sabinillas:"Playa de Sabinillas", cap_beach_bar:"Strandbar i skyggen av trærne", cap_beach_club:"Beach club med solsenger", cap_espetos:"Espetos – sardiner grillet på stranden", cap_promenade:"Strandpromenaden i Sabinillas", cap_plaza:"Plassen ved stranden i Sabinillas", cap_marina:"Puerto de la Duquesa", cap_harbour_walk:"Havnepromenaden i La Duquesa", cap_padel:"Padelbane rett ved leiligheten",
+    footer_tag:"Bedriftsintern booking",
+    sum_checkin:"Innsjekk", sum_checkout:"Utsjekk", sum_nights:"Netter", sum_guests:"Gjester",
+    nights_word:n=>n+(n===1?" natt":" netter"),
+    err_minmax:"Oppholdet må være mellom 4 og 14 netter.",
+    err_name:"Fyll inn navn og en gyldig Nextron e-post.",
+    err_domain:"Kun e-post fra nextron.no/.se/.dk/.fi kan booke.",
+    err_overlap:"En eller flere av datoene er allerede opptatt.",
+    ok_sent:"Forespørsel sendt! Sjekk e-posten din for bekreftelseslenke.",
+    blocked_airbnb:"Airbnb"
+  },
+  en:{
+    nav_book:"Book", nav_info:"Info", nav_gallery:"Photos", nav_tips:"Tips",
+    tips_title:"Guest tips", tips_sub:"Recommendations from Nextron colleagues – places to eat, visit and things to do.",
+    tips_add:"+ Share a tip", tips_cat:"Category", tips_ttl:"Title", tips_body:"Description", tips_url:"Link (optional)",
+    tips_name:"Name", tips_email:"Email", tips_submit:"Submit tip",
+    tips_hint:"You'll get an email with a confirmation link. Your tip appears once you confirm.",
+    hero_eyebrow:"Company holiday apartment",
+    hero_lead:"Book Nextron's holiday apartment in Marina de la Duquesa on the Costa del Sol – free for employees. Two bedrooms, sea view and the beach right outside.",
+    fact_size:"apartment", fact_beds:"beds", fact_bedrooms:"bedrooms", fact_beach:"Blue flag beach",
+    cal_title:"Select dates", cal_sub:"4–14 nights. Tap check-in, then check-out.",
+    lg_selected:"Selected", lg_range:"Stay", lg_blocked:"Booked",
+    sum_title:"Your booking", sum_empty:"Select check-in and check-out dates in the calendar.",
+    f_name:"Name", f_email:"Nextron email", f_email_hint:"Only @nextron.no/.se/.dk/.fi may book.",
+    f_guests:"Number of guests", f_msg:"Message (optional)", f_submit:"Send booking request",
+    f_note:"You'll receive an email with a confirmation link. The booking is not valid until you confirm.",
+    info_title:"Practical information", info_sub:"Everything you need to know about the apartment and the area.",
+    gal_title:"Photos", gal_sub:"From the apartment and the area.",
+    cap_view:"View and pool", cap_balcony:"Balcony with sea view",
+    cap_living_old:"Living room", cap_living:"Living room with dining area", cap_kitchen:"Kitchen with utility room", cap_bed1:"Bedroom 1", cap_bed2:"Bedroom 2", cap_bedroom:"Bedroom 2, from the doorway", cap_beach_marina:"The beach below the apartment, towards the marina", cap_beach_sabinillas:"Sabinillas beach", cap_beach_bar:"Beach bar in the shade", cap_beach_club:"Beach club with sunbeds", cap_espetos:"Espetos – sardines grilled on the beach", cap_promenade:"Sabinillas seafront promenade", cap_plaza:"Seafront square in Sabinillas", cap_marina:"Puerto de la Duquesa marina", cap_harbour_walk:"Harbour promenade, La Duquesa", cap_padel:"Padel court next to the apartment",
+    footer_tag:"Company internal booking",
+    sum_checkin:"Check-in", sum_checkout:"Check-out", sum_nights:"Nights", sum_guests:"Guests",
+    nights_word:n=>n+(n===1?" night":" nights"),
+    err_minmax:"Stay must be between 4 and 14 nights.",
+    err_name:"Enter your name and a valid Nextron email.",
+    err_domain:"Only emails from nextron.no/.se/.dk/.fi may book.",
+    err_overlap:"One or more of the dates are already booked.",
+    ok_sent:"Request sent! Check your email for the confirmation link.",
+    blocked_airbnb:"Airbnb"
+  }
+};
+let LANG = 'no';
+const MND = {
+  no:["januar","februar","mars","april","mai","juni","juli","august","september","oktober","november","desember"],
+  en:["January","February","March","April","May","June","July","August","September","October","November","December"]
+};
+const DOW = { no:["man","tir","ons","tor","fre","lør","søn"], en:["Mon","Tue","Wed","Thu","Fri","Sat","Sun"] };
+
+// ---------- Info content (bilingual) ----------
+const INFO = {
+  no:[
+    {ic:"🏠", h:"Fakta om leiligheten", list:["2 soverom, 2 bad, 1 stue med dobbel sovesofa – 90 m²","6 sengeplasser totalt","12 m² terrasse med havutsikt","Aircondition og treningsrom","4 svømmebasseng (2 per gård), ett åpent hele året","Lukket område med hage, lekeplass og paddle-tennisbane"]},
+    {ic:"📍", h:"Beliggenhet", html:"Leiligheten ligger i La Duquesa Havn.<br><b>Marina de la Duquesa</b><br>Apartment 628, 2. etasje (første er 0)<br>29692 Puerto de la Duquesa<br>Parkering: plass 198 (1. underetasje) · Bod: 88 (2. underetasje)<br><a href='https://goo.gl/maps/ezogDk648Nr' target='_blank' rel='noopener'>Google Maps</a>"},
+    {ic:"✈️", h:"Hvordan komme seg dit", list:["Nærmeste flyplass er Málaga (ca. 1 times kjøring). SAS, Norwegian, Flyr og Ryanair flyr dit.","Leiebil: Brunos Car i Puerto Duquesa, ca. €60/dag – oppgi rabattkode «special1».","Dør-til-dør transport: Happy Transfers, +34 659 451 630, <a href='https://happytransfers.es/' target='_blank' rel='noopener'>happytransfers.es</a>, ca. €130 hver vei fra Málaga.","Taxi: fastpris ca. €110 fra flyplassen. Bruk appen Pidetaxi.","Buss: fra Málaga til Marbella, bytt til Sabinillas."]},
+    {ic:"🔑", h:"Nøkler og adkomst", html:"Det er satt opp en nøkkelboks utenfor kontoret ved kirken i Sabinillas (tidligere Enova Estates), merket «Quad AS». Da kan man komme når som helst på døgnet.<br>Koden til nøkkelboksen sendes på e-post når bookingen er bekreftet.<br><a href='https://goo.gl/maps/hT5jiLapctdnqQTi6' target='_blank' rel='noopener'>Se på kart</a>"},
+    {ic:"🛒", h:"Nyttig informasjon", list:["Nærmeste supermarked tar kort.","Apotek i nærheten.","Ved avreise: rydd etter deg, ta av sengetøy og legg det på gulvet, og legg brukte håndklær ved vaskemaskinen.","Ta med håndklær (noen finnes i leiligheten fra tidligere gjester)."]},
+    {ic:"🌅", h:"Ting å gjøre", list:["Bade og sole på Blue Flag-stranden, 10 meter unna.","Marbella og Puerto Banús, 20–25 min unna.","Dagstur til Gibraltar – taxfritt og aper.","Hydrofoil til Marokko og marked.","Ski i Sierra Nevada (2t 45min med bil)."]},
+    {ic:"🏊", h:"Bassengtider sommer 2026", html:"Alle bassengene er åpne fra 16. juni til 15. september. Merk åpningstidene:<br><br><b>1. juni – 30. september</b><br>Basseng 2 og 3: 11:00–22:00<br><br><b>16. juni – 15. september</b><br>Basseng 1: 11:00–21:00<br>Basseng 2 og 3: 11:00–22:00<br>Basseng 4: 11:00–20:00<br><br><b>16. – 30. september</b><br>Basseng 1: 11:00–21:00<br>Basseng 2 og 3: 11:00–22:00<br>Basseng 4: stengt"},
+    {ic:"📋", h:"Husregler (kort)", list:["Ro mellom kl. 24 og 10, og mellom kl. 15 og 17. Ikke spill høy musikk, og ingen musikk om natten.","Bruk dusjen før bading. Ikke gå i bassenget med gateklær/sko, glassbeholdere eller oppblåsbare madrasser.","Solsenger kan ikke reserveres – maks 2 per leilighet. Barn må ha følge av voksen i bassenget.","Parker kun på plassen som hører til leiligheten.","Kast søppel i containerne ute – ikke sett det i gangene. Ikke kast sneiper/papir på bakken.","Ikke heng håndklær eller eiendeler på terrasserekkverket. Plukk opp etter hunden.","Hold støynivået nede, særlig etter kl. 23."]},
+    {ic:"📞", h:"Lokal kontakt", html:"Wilkins Property Management passer på leiligheten og har ekstra nøkler.<br><b>Karen Wilkins</b> · +34 951 277 170<br>wilkinspropertymanagement@outlook.com<br><span style='color:var(--muted)'>Kontakt kun når det haster og må løses lokalt. Alt annet tas med Geir.</span>", span2:true}
+  ],
+  en:[
+    {ic:"🏠", h:"Apartment facts", list:["2 bedrooms, 2 bathrooms, 1 living room with double sofa bed – 90 m²","6 beds in total","12 m² terrace with sea view","Air conditioning and gym","4 swimming pools (2 per courtyard), one open all year","Gated area with garden, playground and paddle-tennis court"]},
+    {ic:"📍", h:"Location", html:"The apartment is in La Duquesa Marina.<br><b>Marina de la Duquesa</b><br>Apartment 628, 2nd floor (ground is 0)<br>29692 Puerto de la Duquesa<br>Parking: spot 198 (basement 1) · Storage: 88 (basement 2)<br><a href='https://goo.gl/maps/ezogDk648Nr' target='_blank' rel='noopener'>Google Maps</a>"},
+    {ic:"✈️", h:"Getting there", list:["Nearest airport is Málaga (about 1 hour drive). SAS, Norwegian, Flyr and Ryanair fly there.","Rental car: Brunos Car in Puerto Duquesa, approx. €60/day – use discount code “special1”.","Door-to-door transfer: Happy Transfers, +34 659 451 630, <a href='https://happytransfers.es/' target='_blank' rel='noopener'>happytransfers.es</a>, approx. €130 each way from Málaga.","Taxi: fixed price approx. €110 from the airport. Use the Pidetaxi app.","Bus: from Málaga to Marbella, change to Sabinillas."]},
+    {ic:"🔑", h:"Keys and access", html:"There is a key box outside the office by the church in Sabinillas (formerly Enova Estates), marked “Quad AS”, so you can arrive at any hour.<br>The key box code is sent by email once your booking is confirmed.<br><a href='https://goo.gl/maps/hT5jiLapctdnqQTi6' target='_blank' rel='noopener'>View on map</a>"},
+    {ic:"🛒", h:"Useful information", list:["Nearest supermarket accepts cards.","Pharmacy nearby.","On departure: tidy up, remove bed linen and leave it on the floor, and leave used towels by the washing machine.","Bring towels (some are left in the apartment by previous guests)."]},
+    {ic:"🌅", h:"Things to do", list:["Swim and sunbathe on the Blue Flag beach, 10 metres away.","Marbella and Puerto Banús, 20–25 min away.","Day trip to Gibraltar – tax-free and monkeys.","Hydrofoil to Morocco and the markets.","Skiing in Sierra Nevada (2h 45min by car)."]},
+    {ic:"🏊", h:"Pool hours summer 2026", html:"All swimming pools are open from 16 June to 15 September. Please note the opening hours:<br><br><b>1 June – 30 September</b><br>Pools 2 and 3: 11:00–22:00<br><br><b>16 June – 15 September</b><br>Pool 1: 11:00–21:00<br>Pools 2 and 3: 11:00–22:00<br>Pool 4: 11:00–20:00<br><br><b>16 – 30 September</b><br>Pool 1: 11:00–21:00<br>Pools 2 and 3: 11:00–22:00<br>Pool 4: closed"},
+    {ic:"📋", h:"House rules (summary)", list:["Quiet between 12 midnight and 10 AM, and between 3 and 5 PM. Don't play loud music, and no music at night.","Shower before swimming. No street clothes/shoes, glass containers or inflatable mats in the pool.","Sunbeds can't be reserved – max 2 per apartment. Children must be accompanied by an adult in the pool.","Park only in the space assigned to the apartment.","Put rubbish in the outside containers – don't leave it in the hallways. No cigarette butts or paper on the ground.","Don't hang towels or belongings on the terrace railings. Pick up after your dog.","Keep noise down, especially after 11 PM."]},
+    {ic:"📞", h:"Local contact", html:"Wilkins Property Management looks after the apartment and has spare keys.<br><b>Karen Wilkins</b> · +34 951 277 170<br>wilkinspropertymanagement@outlook.com<br><span style='color:var(--muted)'>Contact only for urgent matters that must be solved locally. Everything else goes to Geir.</span>", span2:true}
+  ]
+};
+
+// ---------- State ----------
+const ALLOWED_DOMAINS = ['nextron.no','nextron.se','nextron.dk','nextron.fi'];
+const MIN_NIGHTS=4, MAX_NIGHTS=14, MAX_MONTHS_AHEAD=18;
+let viewMonth = new Date(); viewMonth.setDate(1);
+let checkIn=null, checkOut=null;
+let blocked=[]; // {start,end,source}
+let cms=null;
+const API_BASE = window.DUQUESA_API_BASE || '';
+
+const $ = s=>document.querySelector(s);
+const t = k => { const v=I18N[LANG][k]; return v; };
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const parseISO = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const today = ()=>{ const d=new Date(); d.setHours(0,0,0,0); return d; };
+function fmtNice(d){ return `${d.getDate()}. ${MND[LANG][d.getMonth()]} ${d.getFullYear()}`; }
+function nightsBetween(a,b){ return Math.round((b-a)/86400000); }
+
+async function api(path, options={}){
+  const res = await fetch(API_BASE+path,{ ...options, headers:{'Content-Type':'application/json',...(options.headers||{})} });
+  let data=null; try{ data=await res.json(); }catch(e){}
+  if(!res.ok) throw new Error((data&&(data.error?.message||data.error))||'API-feil');
+  return data;
+}
+
+// ---------- Blocked dates ----------
+function isBlocked(d){
+  const x=iso(d);
+  for(const b of blocked){ if(x>=b.start && x<b.end) return b; }
+  return null;
+}
+// Booking som slutter på denne datoen (gjest reiser ~kl 10 -> formiddag opptatt).
+function endsOn(d){
+  const x=iso(d);
+  for(const b of blocked){ if(b.end===x) return b; }
+  return null;
+}
+// Booking som starter på denne datoen (gjest ankommer ettermiddag -> ettermiddag opptatt).
+function startsOn(d){
+  const x=iso(d);
+  for(const b of blocked){ if(b.start===x) return b; }
+  return null;
+}
+// ISO-landkode -> liten SVG-flagg (vises likt på alle enheter, også Windows som ikke har flagg-emoji)
+function countryFlagSVG(cc){
+  if(!cc) return '';
+  const h=11, w=15; // liten flaggstørrelse
+  const nordic = {
+    // Nordiske kors-flagg: bakgrunn + kors. cross = korsfarge, bg = bakgrunn.
+    NO: {bg:'#ba0c2f', cross:'#fff', inner:'#00205b'}, // rødt med hvit+blå kors
+    SE: {bg:'#006aa7', cross:'#fecc00'},
+    DK: {bg:'#c8102e', cross:'#fff'},
+    FI: {bg:'#fff', cross:'#003580'},
+  };
+  const c = nordic[cc.toUpperCase()];
+  if(!c) return '';
+  // kors: vertikal stolpe forskjøvet til venstre, horisontal i midten
+  const vx = 5, vw = 2.2;   // vertikal arm x-posisjon og bredde
+  const hy = (h-2.2)/2, hh = 2.2; // horisontal arm
+  let svg = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="display:inline-block;vertical-align:-1px;border-radius:1px;margin-right:2px;">`;
+  svg += `<rect width="${w}" height="${h}" fill="${c.bg}"/>`;
+  if(c.inner){
+    // Norge: hvit kors (bredere) så blå kors oppå
+    const ow=3.4, oh=3.4;
+    svg += `<rect x="${5-(ow-vw)/2}" width="${ow}" height="${h}" fill="${c.cross}"/>`;
+    svg += `<rect y="${(h-oh)/2}" width="${w}" height="${oh}" fill="${c.cross}"/>`;
+    svg += `<rect x="${vx}" width="${vw}" height="${h}" fill="${c.inner}"/>`;
+    svg += `<rect y="${hy}" width="${w}" height="${hh}" fill="${c.inner}"/>`;
+  } else {
+    svg += `<rect x="${vx}" width="${vw}" height="${h}" fill="${c.cross}"/>`;
+    svg += `<rect y="${hy}" width="${w}" height="${hh}" fill="${c.cross}"/>`;
+  }
+  svg += `</svg>`;
+  return svg;
+}
+function rangeHasBlocked(a,b){ // [a,b)
+  for(let x=new Date(a); x<b; x.setDate(x.getDate()+1)){ if(isBlocked(x)) return true; }
+  return false;
+}
+
+// ---------- Calendar ----------
+function maxDate(){ const d=today(); d.setMonth(d.getMonth()+MAX_MONTHS_AHEAD); return d; }
+function renderCalendar(){
+  const host=$('#months'); host.innerHTML='';
+  for(let i=0;i<2;i++){
+    const m=new Date(viewMonth); m.setMonth(m.getMonth()+i);
+    host.appendChild(buildMonth(m));
+  }
+  // nav limits
+  const min=today(); min.setDate(1);
+  $('#prevM').disabled = (viewMonth.getFullYear()===min.getFullYear() && viewMonth.getMonth()===min.getMonth());
+  const last=maxDate();
+  const secondShown=new Date(viewMonth); secondShown.setMonth(secondShown.getMonth()+1);
+  $('#nextM').disabled = (secondShown.getFullYear()>last.getFullYear() || (secondShown.getFullYear()===last.getFullYear() && secondShown.getMonth()>=last.getMonth()));
+}
+function buildMonth(m){
+  const wrap=document.createElement('div'); wrap.className='month';
+  const h=document.createElement('h3'); h.textContent=`${MND[LANG][m.getMonth()]} ${m.getFullYear()}`; wrap.appendChild(h);
+  const dow=document.createElement('div'); dow.className='dow';
+  DOW[LANG].forEach(d=>{ const s=document.createElement('span'); s.textContent=d; dow.appendChild(s); });
+  wrap.appendChild(dow);
+  const grid=document.createElement('div'); grid.className='grid7';
+  const first=new Date(m.getFullYear(),m.getMonth(),1);
+  let lead=(first.getDay()+6)%7; // Monday-first
+  for(let i=0;i<lead;i++){ const e=document.createElement('div'); e.className='day empty'; grid.appendChild(e); }
+  const dim=new Date(m.getFullYear(),m.getMonth()+1,0).getDate();
+  const tdy=today(), maxD=maxDate();
+  for(let d=1;d<=dim;d++){
+    const cur=new Date(m.getFullYear(),m.getMonth(),d);
+    const cell=document.createElement('div'); cell.className='day'; cell.textContent=d;
+    const past = cur<tdy, beyond = cur>maxD;
+    const blk = isBlocked(cur);
+    if(past||beyond){ cell.classList.add('disabled'); }
+    else if(blk){
+      cell.classList.add('blocked');
+      if(blk.source==='airbnb'){
+        cell.classList.add('airbnb');
+        cell.title='Airbnb';
+      } else {
+        // intern booking: vis flagg + initialer
+        const flag = countryFlagSVG(blk.country);
+        const ini = blk.initials || '';
+        cell.title = (ini?ini+' ':'') + '· opptatt';
+        if(ini || flag){
+          const tag=document.createElement('span');
+          tag.className='daytag';
+          tag.innerHTML = (flag||'') + (ini?'<span class="daytag-ini">'+ini+'</span>':'');
+          cell.appendChild(tag);
+        }
+      }
+    }
+    else {
+      // Dagen er ellers ledig. Sjekk om den er check-ut-morgen og/eller check-inn-ettermiddag.
+      const ends = endsOn(cur);   // gjest reiser om morgenen -> formiddag opptatt
+      const starts = startsOn(cur); // gjest ankommer -> ettermiddag opptatt
+      if(ends){ cell.classList.add('half','half-am'); }
+      if(starts){ cell.classList.add('half','half-pm'); }
+      if(ends || starts){
+        // Løft dagtallet over det skraverte trekant-overlegget
+        cell.textContent='';
+        const num=document.createElement('span');
+        num.className='halfday-num'; num.textContent=d;
+        cell.appendChild(num);
+        const parts=[];
+        if(ends) parts.push('opptatt til ca. kl. 10');
+        if(starts) parts.push('opptatt fra ettermiddagen');
+        cell.title = parts.join(' · ');
+      }
+      cell.addEventListener('click',()=>pickDate(cur));
+    }
+    // selection visuals
+    if(checkIn && iso(cur)===iso(checkIn)) cell.classList.add('sel','start');
+    if(checkOut && iso(cur)===iso(checkOut)) cell.classList.add('sel','end');
+    if(checkIn && checkOut && cur>checkIn && cur<checkOut) cell.classList.add('inrange');
+    grid.appendChild(cell);
+  }
+  wrap.appendChild(grid);
+  return wrap;
+}
+function pickDate(d){
+  if(!checkIn || (checkIn && checkOut) || d<=checkIn){
+    checkIn=d; checkOut=null;
+  } else {
+    // setting checkout
+    const n=nightsBetween(checkIn,d);
+    if(n<MIN_NIGHTS || n>MAX_NIGHTS){ toast(t('err_minmax')); return; }
+    if(rangeHasBlocked(checkIn,d)){ toast(t('err_overlap')); return; }
+    checkOut=d;
+  }
+  renderCalendar(); renderSummary();
+}
+
+// ---------- Summary / form ----------
+function renderSummary(){
+  const body=$('#sum-body'), form=$('#book-form');
+  if(!checkIn || !checkOut){
+    body.innerHTML=`<div class="empty-sum">${t('sum_empty')}</div>`;
+    form.style.display='none'; return;
+  }
+  const n=nightsBetween(checkIn,checkOut);
+  body.innerHTML=`
+    <div class="sum-line"><span>${t('sum_checkin')}</span><b>${fmtNice(checkIn)}</b></div>
+    <div class="sum-line"><span>${t('sum_checkout')}</span><b>${fmtNice(checkOut)}</b></div>
+    <div class="sum-line"><span>${t('sum_nights')}</span><b>${I18N[LANG].nights_word(n)}</b></div>`;
+  form.style.display='block';
+}
+
+// ---------- Booking submit ----------
+function validEmail(e){
+  e=e.trim().toLowerCase();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) return false;
+  const dom=e.split('@')[1];
+  return ALLOWED_DOMAINS.includes(dom);
+}
+async function submitBooking(){
+  const name=$('#f-name').value.trim(), email=$('#f-email').value.trim();
+  const guests=parseInt($('#f-guests').value||'1',10), msg=$('#f-msg').value.trim();
+  if(!name||!email){ toast(t('err_name')); return; }
+  if(!validEmail(email)){ toast(t('err_domain')); return; }
+  const n=nightsBetween(checkIn,checkOut);
+  if(n<MIN_NIGHTS||n>MAX_NIGHTS){ toast(t('err_minmax')); return; }
+  if(rangeHasBlocked(checkIn,checkOut)){ toast(t('err_overlap')); return; }
+  const payload={ checkIn:iso(checkIn), checkOut:iso(checkOut), name, email, guests, message:msg, lang:LANG };
+  $('#bookBtn').disabled=true;
+  try{
+    await api('/api/bookings',{ method:'POST', body:JSON.stringify(payload) });
+    toast(t('ok_sent'));
+    checkIn=checkOut=null; renderCalendar(); renderSummary();
+    $('#f-name').value=''; $('#f-email').value=''; $('#f-msg').value='';
+    await loadBlocked();
+  }catch(e){ toast(e.message||'Feil'); }
+  $('#bookBtn').disabled=false;
+}
+
+// ---------- Load blocked from backend ----------
+async function loadBlocked(){
+  try{ blocked = await api('/api/availability'); }
+  catch(e){ blocked=[]; }
+  renderCalendar();
+}
+
+// ---------- Info render ----------
+function renderInfo(){
+  const host=$('#info-grid'); host.innerHTML='';
+  const data = (cms && cms.info && cms.info[LANG]) ? cms.info[LANG] : INFO[LANG];
+  data.forEach(c=>{
+    const div=document.createElement('div'); div.className='info-card'+(c.span2?' span2':'');
+    let inner=`<h3><span class="ic">${c.ic||'•'}</span>${c.h}</h3>`;
+    if(c.html) inner+=`<p>${c.html}</p>`;
+    if(c.list) inner+='<ul>'+c.list.map(li=>`<li>${li}</li>`).join('')+'</ul>';
+    div.innerHTML=inner; host.appendChild(div);
+  });
+}
+
+// ---------- Language ----------
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i]').forEach(el=>{
+    const k=el.dataset.i, v=I18N[LANG][k];
+    if(typeof v==='string') el.textContent=v;
+  });
+  // oppdater kategori-valg i tips-skjemaet
+  const sel=document.getElementById('tips-cat');
+  if(sel){ const cats=TIP_CAT[LANG]||TIP_CAT.no; Array.from(sel.options).forEach(o=>{ if(cats[o.value]) o.textContent=cats[o.value]; }); }
+  // hvis tips-visningen er åpen, oppdater listen til riktig språk
+  if(document.getElementById('view-tips')?.classList.contains('active')) loadTips();
+  renderCalendar(); renderSummary(); renderInfo();
+}
+
+// ---------- Views nav ----------
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const el=document.getElementById('view-'+name); if(el) el.classList.add('active');
+  document.querySelectorAll('.navlink[data-view]').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
+  if(name==='tips') loadTips();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+const TIP_CAT = {
+  no:{food:'🍽️ Spisested', visit:'📍 Sted å besøke', activity:'🏄 Ting å gjøre', other:'💡 Annet'},
+  en:{food:'🍽️ Food', visit:'📍 Place to visit', activity:'🏄 Activity', other:'💡 Other'}
+};
+async function loadTips(){
+  const host=$('#tips-list'); if(!host) return;
+  try{
+    const list=await api('/api/tips');
+    if(!list.length){ host.innerHTML='<div class="empty-sum" data-i="tips_empty">'+(LANG==='en'?'No tips yet – be the first to share one!':'Ingen tips ennå – bli den første til å dele et!')+'</div>'; return; }
+    host.innerHTML=list.map(t=>{
+      const cat=(TIP_CAT[LANG]||TIP_CAT.no)[t.category]||'';
+      const link=t.url?` <a href="${t.url.replace(/"/g,'&quot;')}" target="_blank" rel="noopener">${LANG==='en'?'Link':'Lenke'} ↗</a>`:'';
+      return `<div class="tip-card">
+        <div class="tip-cat">${cat}</div>
+        <div class="tip-title">${escapeH(t.title)}</div>
+        <div class="tip-body">${escapeH(t.body)}${link}</div>
+        <div class="tip-by">— ${escapeH(t.name)}</div>
+      </div>`;
+    }).join('');
+  }catch(e){ host.innerHTML='<div class="empty-sum">'+(LANG==='en'?'Could not load tips.':'Kunne ikke laste tips.')+'</div>'; }
+}
+function escapeH(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+document.querySelectorAll('.navlink[data-view]').forEach(b=>{
+  b.onclick=()=>showView(b.dataset.view);
+});
+// Tips-skjema
+(function(){
+  const nb=$('#tips-new-btn'); if(!nb) return;
+  nb.onclick=()=>{ const f=$('#tips-form'); f.style.display = f.style.display==='none'?'block':'none'; };
+  $('#tips-submit').onclick=async ()=>{
+    const payload={
+      category:$('#tips-cat').value,
+      title:$('#tips-title').value.trim(),
+      body:$('#tips-body').value.trim(),
+      url:$('#tips-url').value.trim(),
+      name:$('#tips-name').value.trim(),
+      email:$('#tips-email').value.trim(),
+      lang:LANG
+    };
+    if(!payload.title||!payload.body||!payload.name||!payload.email){ toast(LANG==='en'?'Please fill in title, description, name and email.':'Fyll inn tittel, beskrivelse, navn og e-post.'); return; }
+    if(payload.url && !/^https?:\/\//i.test(payload.url)){ toast(LANG==='en'?'Link must start with https://':'Lenken må starte med https://'); return; }
+    const btn=$('#tips-submit'); btn.disabled=true; btn.textContent=LANG==='en'?'Sending …':'Sender …';
+    try{
+      await api('/api/tips',{ method:'POST', body:JSON.stringify(payload) });
+      $('#tips-form').style.display='none';
+      ['tips-title','tips-body','tips-url','tips-name','tips-email'].forEach(id=>{ const e=document.getElementById(id); if(e) e.value=''; });
+      toast(LANG==='en'?'Thanks! Check your email to confirm and publish.':'Takk! Sjekk e-posten for å bekrefte og publisere.');
+    }catch(e){ toast(e.message||(LANG==='en'?'Could not submit.':'Kunne ikke sende inn.')); }
+    btn.disabled=false; btn.textContent=LANG==='en'?'Submit tip':'Send inn tips';
+  };
+})();
+document.querySelectorAll('.lang button').forEach(b=>{
+  b.onclick=()=>{
+    LANG=b.dataset.lang;
+    document.querySelectorAll('.lang button').forEach(x=>x.classList.toggle('active',x===b));
+    applyLang();
+  };
+});
+$('#prevM').onclick=()=>{ if(checkIn && !checkOut){ checkIn=null; renderSummary(); } viewMonth.setMonth(viewMonth.getMonth()-1); renderCalendar(); };
+$('#nextM').onclick=()=>{ if(checkIn && !checkOut){ checkIn=null; renderSummary(); } viewMonth.setMonth(viewMonth.getMonth()+1); renderCalendar(); };
+$('#bookBtn').onclick=submitBooking;
+
+// ---------- Toast ----------
+let toastTimer;
+function toast(msg){ const el=$('#toast'); el.innerHTML=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),4200); }
+
+// ---------- Admin ----------
+let adminPass=null;
+function syncAdmin(){
+  const show=(location.hash||'').toLowerCase()==='#admin';
+  if(show) showView('admin');
+}
+window.addEventListener('hashchange',syncAdmin);
+$('#admin-login-btn').onclick=async ()=>{
+  const p=$('#admin-pass').value; if(!p){ toast('Skriv inn passord.'); return; }
+  adminPass=p;
+  try{ await adminLoadBookings(); $('#admin-login').style.display='none'; $('#admin-content').style.display='block'; adminLoadCms(); }
+  catch(e){ adminPass=null; toast('Feil passord.'); }
+};
+$('#admin-logout').onclick=()=>{ adminPass=null; $('#admin-pass').value=''; $('#admin-content').style.display='none'; $('#admin-login').style.display='block'; };
+$('#admin-tab-bookings').onclick=()=>adminTab('bookings');
+$('#admin-tab-cms').onclick=()=>adminTab('cms');
+$('#admin-tab-airbnb').onclick=()=>adminTab('airbnb');
+$('#admin-tab-tips').onclick=()=>adminTab('tips');
+function adminTab(which){
+  ['bookings','cms','airbnb','tips'].forEach(x=>$('#admin-'+x).style.display = x===which?'block':'none');
+  if(which==='tips') adminLoadTips();
+}
+async function adminLoadTips(){
+  const host=$('#admin-tips');
+  try{
+    const list=await api('/api/admin/tips',{ headers:{'x-admin-password':adminPass} });
+    if(!list.length){ host.innerHTML='<div class="empty-sum">Ingen tips ennå.</div>'; return; }
+    const catName={food:'🍽️ Spisested',visit:'📍 Sted',activity:'🏄 Aktivitet',other:'💡 Annet'};
+    host.innerHTML=list.map(t=>{
+      const stTxt = t.status==='published'?'Publisert':(t.status==='pending'?'Avventer bekreftelse':'Skjult');
+      const stCls = t.status==='published'?'st-confirmed':(t.status==='pending'?'st-pending':'st-airbnb');
+      return `<div class="bk">
+        <div style="flex:1;">
+          <div class="bk-room">${escapeH(t.title)} <span style="font-weight:400;color:var(--muted);font-size:13px;">· ${catName[t.category]||''}</span></div>
+          <div class="bk-meta">${escapeH(t.body).slice(0,140)}${t.body.length>140?'…':''}</div>
+          <div class="bk-meta" style="margin-top:3px;">${escapeH(t.name)} · ${escapeH(t.email)}</div>
+          <button type="button" class="bk-del" data-tipdel="${t.id}" style="margin-top:6px;">Slett</button>
+        </div>
+        <span class="bk-status ${stCls}">${stTxt}</span>
+      </div>`;
+    }).join('');
+  }catch(e){ host.innerHTML='<div class="empty-sum">Kunne ikke laste tips.</div>'; }
+}
+$('#admin-tips').addEventListener('click', async (ev)=>{
+  const btn=ev.target.closest('[data-tipdel]'); if(!btn) return;
+  if(!confirm('Slette dette tipset permanent?')) return;
+  btn.disabled=true; btn.textContent='Sletter …';
+  try{
+    await api('/api/admin/tips/'+encodeURIComponent(btn.dataset.tipdel),{ method:'DELETE', headers:{'x-admin-password':adminPass} });
+    toast('Tipset er slettet.'); adminLoadTips();
+  }catch(e){ toast(e.message||'Kunne ikke slette.'); btn.disabled=false; btn.textContent='Slett'; }
+});
+function bookingFormHtml(prefix, b){
+  b = b || {};
+  return `
+    <div class="field"><label>Navn</label><input id="${prefix}-name" value="${(b.name||'').replace(/"/g,'&quot;')}" placeholder="Ola Nordmann"></div>
+    <div class="field"><label>E-post</label><input id="${prefix}-email" type="email" value="${(b.email||'').replace(/"/g,'&quot;')}" placeholder="navn@nextron.no"></div>
+    <div style="display:flex;gap:10px;">
+      <div class="field" style="flex:1;"><label>Innsjekk</label><input id="${prefix}-in" type="date" value="${b.checkIn||''}"></div>
+      <div class="field" style="flex:1;"><label>Utsjekk</label><input id="${prefix}-out" type="date" value="${b.checkOut||''}"></div>
+    </div>
+    <div class="field"><label>Antall gjester</label><input id="${prefix}-guests" type="number" min="1" max="6" value="${b.guests||2}"></div>
+    <div class="field"><label>Melding (valgfritt)</label><input id="${prefix}-msg" value="${(b.message||'').replace(/"/g,'&quot;')}"></div>`;
+}
+
+async function adminLoadBookings(){
+  const host=$('#admin-bookings');
+  try{
+    const list=await api('/api/admin/bookings',{ headers:{'x-admin-password':adminPass} });
+    const topBtn = `<button type="button" class="navlink" id="bk-new-btn" style="margin-bottom:14px;">+ Ny booking</button>
+      <div id="bk-new-form" style="display:none;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;">
+        ${bookingFormHtml('nbk', {})}
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px;">
+          <input type="checkbox" id="nbk-confirm" checked> Bekreft direkte (uten e-postverifisering)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;margin-top:6px;">
+          <input type="checkbox" id="nbk-mail"> Send bekreftelsesmail med nøkkelkode
+        </label>
+        <button class="btn" id="nbk-save" style="margin-top:12px;">Opprett booking</button>
+      </div>`;
+    if(!list.length){ host.innerHTML=topBtn+'<div class="empty-sum">Ingen bookinger.</div>'; wireNewBooking(); return; }
+    host.innerHTML=topBtn+list.map(b=>{
+      const stCls = b.status==='confirmed'?'st-confirmed':(b.source==='airbnb'?'st-airbnb':'st-pending');
+      const stTxt = b.source==='airbnb'?'Airbnb':(b.status==='confirmed'?'Bekreftet':(b.status==='pending'?'Avventer':b.status));
+      const editable = b.source!=='airbnb';
+      return `<div class="bk" data-bk='${JSON.stringify({id:b.id,name:b.name,email:b.email,checkIn:b.checkIn,checkOut:b.checkOut,guests:b.guests,message:b.message}).replace(/'/g,"&#39;")}'>
+        <div style="flex:1;">
+          <div class="bk-room">${b.checkIn} → ${b.checkOut}</div>
+          <div class="bk-meta">${b.name||'-'} · ${b.email||''} ${b.guests?('· '+b.guests+' gj.'):''}</div>
+          ${editable?`<div style="display:flex;gap:6px;margin-top:6px;"><button type="button" class="bk-del" data-edit="${b.id}">Endre</button><button type="button" class="bk-del" data-del="${b.id}">Kanseller</button></div>`:''}
+          <div class="bk-edit" id="edit-${b.id}" style="display:none;margin-top:10px;"></div>
+        </div>
+        <span class="bk-status ${stCls}">${stTxt}</span>
+      </div>`;
+    }).join('');
+    wireNewBooking();
+  }catch(e){
+    host.innerHTML='<div class="empty-sum">Kunne ikke laste bookinger.</div>';
+  }
+}
+function wireNewBooking(){
+  const nb=$('#bk-new-btn'); if(!nb) return;
+  nb.onclick=()=>{ const f=$('#bk-new-form'); f.style.display = f.style.display==='none'?'block':'none'; };
+  const save=$('#nbk-save'); if(!save) return;
+  save.onclick=async ()=>{
+    const payload={
+      name:$('#nbk-name').value.trim(), email:$('#nbk-email').value.trim(),
+      checkIn:$('#nbk-in').value, checkOut:$('#nbk-out').value,
+      guests:parseInt($('#nbk-guests').value||'2',10), message:$('#nbk-msg').value.trim(),
+      confirmNow:$('#nbk-confirm').checked, sendMail:$('#nbk-mail').checked, lang:'no'
+    };
+    if(!payload.name||!payload.email||!payload.checkIn||!payload.checkOut){ toast('Fyll inn navn, e-post og datoer.'); return; }
+    save.disabled=true; save.textContent='Oppretter …';
+    try{
+      const r=await api('/api/admin/bookings',{ method:'POST', headers:{'x-admin-password':adminPass}, body:JSON.stringify(payload) });
+      toast(r.status==='confirmed'?'Booking opprettet og bekreftet.':'Booking opprettet – verifiseringslenke sendt.');
+      await adminLoadBookings(); loadBlocked();
+    }catch(e){ toast(e.message||'Kunne ikke opprette.'); save.disabled=false; save.textContent='Opprett booking'; }
+  };
+}
+// Event delegation – kanseller + endre
+$('#admin-bookings').addEventListener('click', async (ev)=>{
+  const delBtn = ev.target.closest('[data-del]');
+  const editBtn = ev.target.closest('[data-edit]');
+  if(delBtn){
+    const id = delBtn.dataset.del;
+    if(!confirm('Kansellere denne bookingen?')) return;
+    delBtn.disabled = true; delBtn.textContent = 'Kansellerer …';
+    try{
+      await api('/api/admin/bookings/'+encodeURIComponent(id),{ method:'DELETE', headers:{'x-admin-password':adminPass} });
+      toast('Bookingen er kansellert.'); await adminLoadBookings(); loadBlocked();
+    }catch(e){ toast(e.message || 'Kunne ikke kansellere.'); delBtn.disabled=false; delBtn.textContent='Kanseller'; }
+    return;
+  }
+  if(editBtn){
+    const id = editBtn.dataset.edit;
+    const row = editBtn.closest('.bk');
+    const data = JSON.parse((row.getAttribute('data-bk')||'{}').replace(/&#39;/g,"'"));
+    const box = $('#edit-'+id);
+    if(box.style.display==='block'){ box.style.display='none'; return; }
+    box.style.display='block';
+    box.innerHTML = bookingFormHtml('e'+id, data) + `<button class="btn" id="esave-${id}" style="margin-top:10px;">Lagre endringer</button>`;
+    $('#esave-'+id).onclick=async ()=>{
+      const payload={
+        name:$('#e'+id+'-name').value.trim(), email:$('#e'+id+'-email').value.trim(),
+        checkIn:$('#e'+id+'-in').value, checkOut:$('#e'+id+'-out').value,
+        guests:parseInt($('#e'+id+'-guests').value||'2',10), message:$('#e'+id+'-msg').value.trim()
+      };
+      try{
+        await api('/api/admin/bookings/'+encodeURIComponent(id),{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify(payload) });
+        toast('Endringer lagret.'); await adminLoadBookings(); loadBlocked();
+      }catch(e){ toast(e.message||'Kunne ikke lagre.'); }
+    };
+    return;
+  }
+});
+async function adminLoadCms(){
+  try{ cms=await api('/api/admin/content-full',{ headers:{'x-admin-password':adminPass} }); }
+  catch(e){ try{ cms=await api('/api/content'); }catch(e2){ cms=null; } }
+  const host=$('#admin-cms');
+  const airbnbUrl = (cms&&cms.airbnbIcalUrl)||'';
+  const keybox = (cms&&cms.keyboxCode)||'';
+  const emailNo = (cms&&cms.emailText&&cms.emailText.no)||'';
+  const emailEn = (cms&&cms.emailText&&cms.emailText.en)||'';
+  host.innerHTML=`
+    <div class="field"><label>Nøkkelboks-kode</label>
+      <input id="cms-keybox" placeholder="f.eks. 1234">
+      <div class="hint">Sendes i bekreftelses-e-posten. Vises aldri på den offentlige siden.</div>
+    </div>
+    <div class="field"><label>Ekstra tekst i bekreftelses-e-post (norsk)</label>
+      <textarea id="cms-email-no" rows="3" placeholder="Valgfri tekst som legges til i bekreftelses-e-posten på norsk."></textarea>
+    </div>
+    <div class="field"><label>Ekstra tekst i bekreftelses-e-post (engelsk)</label>
+      <textarea id="cms-email-en" rows="3" placeholder="Optional text added to the confirmation email in English."></textarea>
+    </div>
+    <button class="btn" id="cms-save-main">Lagre kode &amp; e-posttekst</button>
+
+    <div style="margin-top:26px;padding-top:22px;border-top:1px solid var(--line);">
+      <label style="display:block;font-size:13px;font-weight:600;color:var(--navy);margin-bottom:5px;">Ekstra e-poster med tilgang</label>
+      <div class="hint" style="margin-bottom:8px;">Adresser utenfor Nextron som får se siden og booke (f.eks. keyholder). Én per linje.</div>
+      <textarea id="cms-emails" rows="4" style="font-family:monospace;font-size:13px;" placeholder="keyholder@example.com"></textarea>
+      <button class="btn" id="cms-save-emails">Lagre tilgangsliste</button>
+    </div>
+
+    <details style="margin-top:22px;">
+      <summary style="cursor:pointer;color:var(--muted);font-size:14px;">Avansert: rediger infotekst (JSON)</summary>
+      <div class="field" style="margin-top:10px;"><label>Info-innhold (JSON)</label><textarea id="cms-json" rows="10" style="font-family:monospace;font-size:12px;"></textarea></div>
+      <button class="btn" id="cms-save-json">Lagre infotekst</button>
+      <button class="btn" id="cms-translate" style="background:var(--cyan-deep);margin-top:10px;">Oversett norsk → engelsk</button>
+      <div class="hint" style="margin-top:6px;">Fyller inn den engelske delen automatisk basert på den norske. Husk å lagre etterpå.</div>
+    </details>`;
+  $('#cms-keybox').value = keybox;
+  $('#cms-email-no').value = emailNo;
+  $('#cms-email-en').value = emailEn;
+  $('#cms-json').value = JSON.stringify((cms&&cms.info)||INFO, null, 2);
+
+  // last inn ekstra-e-poster
+  try{
+    const r = await api('/api/admin/allowed-emails',{ headers:{'x-admin-password':adminPass} });
+    $('#cms-emails').value = (r&&r.emails||[]).join('\n');
+  }catch(e){}
+  $('#cms-save-emails').onclick=async ()=>{
+    const list = $('#cms-emails').value.split(/[\n,;]+/).map(s=>s.trim()).filter(Boolean);
+    try{
+      const r = await api('/api/admin/allowed-emails',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({emails:list}) });
+      $('#cms-emails').value=(r&&r.emails||[]).join('\n');
+      toast('Tilgangsliste lagret.');
+    }catch(e){ toast(e.message||'Kunne ikke lagre (sjekk at adressene er gyldige).'); }
+  };
+  $('#cms-save-main').onclick=async ()=>{
+    try{
+      await api('/api/admin/content',{ method:'PUT', headers:{'x-admin-password':adminPass},
+        body:JSON.stringify({ keyboxCode:$('#cms-keybox').value.trim(),
+          emailText:{ no:$('#cms-email-no').value, en:$('#cms-email-en').value } }) });
+      toast('Lagret.');
+    }catch(e){ toast(e.message||'Kunne ikke lagre.'); }
+  };
+  $('#cms-save-json').onclick=async ()=>{
+    let parsed; try{ parsed=JSON.parse($('#cms-json').value); }catch(e){ toast('Ugyldig JSON.'); return; }
+    try{ await api('/api/admin/content',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({info:parsed}) }); cms=cms||{}; cms.info=parsed; renderInfo(); toast('Infotekst lagret.'); }
+    catch(e){ toast(e.message||'Kunne ikke lagre.'); }
+  };
+  $('#cms-translate').onclick=async ()=>{
+    let parsed; try{ parsed=JSON.parse($('#cms-json').value); }catch(e){ toast('Ugyldig JSON – rett opp før oversettelse.'); return; }
+    if(!parsed.no){ toast('Fant ingen norsk del (no) å oversette.'); return; }
+    const btn=$('#cms-translate'); btn.disabled=true; btn.textContent='Oversetter …';
+    try{
+      const r = await api('/api/admin/translate',{ method:'POST', headers:{'x-admin-password':adminPass}, body:JSON.stringify({no:parsed.no}) });
+      parsed.en = r.en;
+      $('#cms-json').value = JSON.stringify(parsed, null, 2);
+      toast('Oversatt! Sjekk teksten og trykk «Lagre infotekst».');
+    }catch(e){ toast(e.message||'Oversettelse feilet.'); }
+    btn.disabled=false; btn.textContent='Oversett norsk → engelsk';
+  };
+  // skjul oversett-knapp hvis tjenesten ikke er konfigurert
+  api('/api/admin/translate-available',{ headers:{'x-admin-password':adminPass} })
+    .then(r=>{ if(!r||!r.available){ const b=$('#cms-translate'); if(b) b.style.display='none'; } }).catch(()=>{});
+  // Airbnb tab
+  $('#admin-airbnb').innerHTML=`<p style="font-size:14px;color:var(--muted);margin-bottom:10px;">Lim inn Airbnb iCal-lenken (.ics). Serveren henter blokkerte datoer automatisk.</p>
+    <div class="field"><label>Airbnb iCal URL</label><input id="airbnb-url" placeholder="https://www.airbnb.com/calendar/ical/...ics"></div>
+    <button class="btn" id="airbnb-save">Lagre &amp; synk nå</button>
+    <button class="btn" id="airbnb-debug" style="background:var(--cyan-deep);margin-top:10px;">Diagnostiser henting</button>
+    <pre id="airbnb-debug-out" style="display:none;white-space:pre-wrap;word-break:break-word;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12px;margin-top:12px;"></pre>`;
+  $('#airbnb-url').value=airbnbUrl;
+  $('#airbnb-save').onclick=async ()=>{
+    const val = ($('#airbnb-url').value||'').trim();
+    if(!val){ toast('URL-feltet er tomt – lim inn iCal-lenken først.'); return; }
+    if(!/^https?:\/\//i.test(val)){ toast('Lenken må starte med https://'); return; }
+    $('#airbnb-save').disabled=true; $('#airbnb-save').textContent='Lagrer & synker …';
+    try{
+      const r = await api('/api/admin/airbnb',{ method:'PUT', headers:{'x-admin-password':adminPass}, body:JSON.stringify({airbnbIcalUrl:val}) });
+      toast('Synket! Hentet '+(r&&typeof r.imported==='number'?r.imported:'?')+' blokkerte perioder.');
+      loadBlocked();
+    }
+    catch(e){ toast(e.message || 'Kunne ikke synke.'); }
+    $('#airbnb-save').disabled=false; $('#airbnb-save').textContent='Lagre & synk nå';
+  };
+  $('#airbnb-debug').onclick=async ()=>{
+    const out=$('#airbnb-debug-out'); out.style.display='block'; out.textContent='Henter …';
+    try{
+      const r = await api('/api/admin/airbnb-debug',{ headers:{'x-admin-password':adminPass} });
+      out.textContent = JSON.stringify(r, null, 2);
+    }catch(e){ out.textContent = 'Feil: '+(e.message||e); }
+  };
+}
+
+// ---------- Init ----------
+// ---------- Tilgangsport ----------
+const GATE_I18N = {
+  no:{ title:'Tilgang', text:'Skriv inn e-posten din, så sender vi deg en lenke for å få tilgang til bookingsiden.',
+       btn:'Send tilgangslenke', ph:'navn@nextron.no',
+       sent:'Sjekk e-posten din! Vi har sendt en tilgangslenke (sjekk søppelpost om du ikke ser den).',
+       err:'Skriv inn en gyldig e-post.' },
+  en:{ title:'Access', text:'Enter your email and we will send you a link to access the booking site.',
+       btn:'Send access link', ph:'name@nextron.no',
+       sent:'Check your email! We sent an access link (check spam if you don\'t see it).',
+       err:'Please enter a valid email.' }
+};
+let gateLang='no';
+function applyGateLang(){
+  const g=GATE_I18N[gateLang];
+  $('#gate-title').textContent=g.title; $('#gate-text').textContent=g.text;
+  $('#gate-btn').textContent=g.btn; $('#gate-email').placeholder=g.ph;
+}
+document.querySelectorAll('.gate-lang button').forEach(btn=>{
+  btn.onclick=()=>{ gateLang=btn.dataset.glang; document.querySelectorAll('.gate-lang button').forEach(x=>x.classList.toggle('active',x===btn)); applyGateLang(); };
+});
+$('#gate-btn').onclick=async ()=>{
+  const email=$('#gate-email').value.trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast(GATE_I18N[gateLang].err); return; }
+  $('#gate-btn').disabled=true;
+  try{ await api('/api/access/request',{ method:'POST', body:JSON.stringify({email, lang:gateLang}) }); }catch(e){}
+  $('#gate-form').style.display='none';
+  const s=$('#gate-sent'); s.style.display='block'; s.textContent=GATE_I18N[gateLang].sent;
+};
+
+async function showGate(){
+  applyGateLang();
+  $('#gate').style.display='grid';
+  document.body.style.overflow='hidden';
+}
+function hideGate(){ $('#gate').style.display='none'; document.body.style.overflow=''; }
+
+async function init(){
+  applyLang();
+  // Admin-siden (#admin) skal alltid være tilgjengelig (egen passordbeskyttelse)
+  const isAdmin = (location.hash||'').toLowerCase()==='#admin';
+  // Sjekk tilgang først – porten foran siden
+  let access=false;
+  try{ const r=await api('/api/access/check'); access=!!(r&&r.access); }catch(e){ access=false; }
+  if(!access && !isAdmin){ showGate(); }
+  else { hideGate(); }
+  try{ cms=await api('/api/content'); if(cms&&cms.info) renderInfo(); }catch(e){}
+  await loadBlocked();
+  syncAdmin();
+}
+init();
+</script>
+
+<div id="lys" role="dialog" aria-modal="true"><button class="lukk" aria-label="Lukk">&times;</button><img alt=""><figcaption></figcaption></div>
+<script>
+(function(){
+  const lys=document.getElementById('lys'), bilde=lys.querySelector('img'), tekst=lys.querySelector('figcaption');
+  document.querySelectorAll('.gallery figure').forEach(f=>f.addEventListener('click',()=>{
+    bilde.src=f.querySelector('img').src; tekst.textContent=f.querySelector('figcaption').textContent; lys.classList.add('apen');
+  }));
+  function lukk(){ lys.classList.remove('apen'); bilde.src=''; }
+  lys.addEventListener('click',lukk);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') lukk(); });
+})();
+</script>
+</body>
+</html>
