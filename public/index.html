@@ -627,8 +627,14 @@ function buildMonth(m){
     const cell=document.createElement('div'); cell.className='day'; cell.textContent=d;
     const past = cur<tdy, beyond = cur>maxD;
     const blk = isBlocked(cur);
+    // Er dette den FØRSTE dagen i en booking (check-inn)? Da ankommer gjesten på ettermiddagen,
+    // så formiddagen er ledig -> vis som halvdag (half-pm) i stedet for helt fylt.
+    // Men bare hvis dagen ikke også er en natt fra en ANNEN (tidligere) booking.
+    const startHere = blk ? startsOn(cur) : null;
+    const prevBlocked = isBlocked(new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()-1));
+    const isCheckInHalf = startHere && !prevBlocked;
     if(past||beyond){ cell.classList.add('disabled'); }
-    else if(blk){
+    else if(blk && !isCheckInHalf){
       cell.classList.add('blocked');
       if(blk.source==='airbnb'){
         cell.classList.add('airbnb');
